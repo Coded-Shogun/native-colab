@@ -100,6 +100,22 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan"
     )
+    analytics_events = relationship(
+        "AnalyticsEvent",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    reports = relationship(
+        "Report",
+        back_populates="creator",
+        cascade="all, delete-orphan",
+        foreign_keys="Report.created_by"
+    )
+    export_jobs = relationship(
+        "ExportJob",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<User(id={self.id}, email='{self.email}', role='{self.role}')>"

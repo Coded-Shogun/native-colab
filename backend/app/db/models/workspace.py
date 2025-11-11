@@ -92,6 +92,26 @@ class Workspace(Base):
         back_populates="workspace",
         cascade="all, delete-orphan"
     )
+    analytics_events = relationship(
+        "AnalyticsEvent",
+        back_populates="workspace",
+        cascade="all, delete-orphan"
+    )
+    reports = relationship(
+        "Report",
+        back_populates="workspace",
+        cascade="all, delete-orphan"
+    )
+    export_jobs = relationship(
+        "ExportJob",
+        back_populates="workspace",
+        cascade="all, delete-orphan"
+    )
+    metrics = relationship(
+        "WorkspaceMetrics",
+        back_populates="workspace",
+        cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<Workspace(id={self.id}, name='{self.name}', slug='{self.slug}')>"

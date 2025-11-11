@@ -96,6 +96,17 @@ from .webhook import (
     IntegrationType,
     IntegrationStatus,
 )
+from .analytics import (
+    AnalyticsEvent,
+    Report,
+    ExportJob,
+    WorkspaceMetrics,
+    AnalyticsEventType,
+    ReportType,
+    ReportStatus,
+    ReportFormat,
+    ExportStatus,
+)
 
 __all__ = [
     "User",
@@ -177,4 +188,13 @@ __all__ = [
     "DeliveryStatus",
     "IntegrationType",
     "IntegrationStatus",
+    "AnalyticsEvent",
+    "Report",
+    "ExportJob",
+    "WorkspaceMetrics",
+    "AnalyticsEventType",
+    "ReportType",
+    "ReportStatus",
+    "ReportFormat",
+    "ExportStatus",
 ]
