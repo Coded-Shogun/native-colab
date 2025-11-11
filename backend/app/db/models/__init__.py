@@ -79,6 +79,12 @@ from .meeting import (
     ParticipantStatus,
     RecordingStatus,
 )
+from .search import (
+    SearchIndex,
+    SearchHistory,
+    SavedSearch,
+    ContentType,
+)
 
 __all__ = [
     "User",
@@ -147,4 +153,8 @@ __all__ = [
     "ParticipantRole",
     "ParticipantStatus",
     "RecordingStatus",
+    "SearchIndex",
+    "SearchHistory",
+    "SavedSearch",
+    "ContentType",
 ]
