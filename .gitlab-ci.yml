@@ -1,0 +1,167 @@
+# GitLab CI/CD Pipeline for Native Colab
+# Runs tests, linting, and builds for both frontend and backend
+
+stages:
+  - test
+  - build
+  - deploy
+
+variables:
+  POSTGRES_DB: nativecolab_test
+  POSTGRES_USER: nativecolab_test
+  POSTGRES_PASSWORD: test123
+  DATABASE_URL: postgresql+asyncpg://nativecolab_test:test123@postgres:5432/nativecolab_test
+  REDIS_URL: redis://redis:6379/0
+
+# ============================================
+# Backend Tests
+# ============================================
+backend-test:
+  stage: test
+  image: python:3.11-slim
+  services:
+    - postgres:15-alpine
+    - redis:7-alpine
+  variables:
+    POSTGRES_HOST_AUTH_METHOD: trust
+  before_script:
+    - cd backend
+    - apt-get update && apt-get install -y gcc libpq-dev
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
+  script:
+    - pytest --cov=app --cov-report=xml --cov-report=html --cov-report=term
+    - coverage report
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: backend/coverage.xml
+    paths:
+      - backend/htmlcov/
+    expire_in: 1 week
+  only:
+    - merge_requests
+    - main
+    - develop
+
+backend-lint:
+  stage: test
+  image: python:3.11-slim
+  before_script:
+    - cd backend
+    - pip install --upgrade pip
+    - pip install black flake8 isort mypy
+  script:
+    - black --check app/
+    - flake8 app/ --max-line-length=88 --extend-ignore=E203,W503
+    - isort --check-only app/
+    - mypy app/ --ignore-missing-imports
+  allow_failure: true
+  only:
+    - merge_requests
+    - main
+    - develop
+
+# ============================================
+# Frontend Tests
+# ============================================
+frontend-test:
+  stage: test
+  image: node:20-alpine
+  before_script:
+    - cd frontend
+    - npm ci
+  script:
+    - npm run lint
+    - npm run type-check
+    - npm run test -- --coverage
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: frontend/coverage/cobertura-coverage.xml
+    paths:
+      - frontend/coverage/
+    expire_in: 1 week
+  only:
+    - merge_requests
+    - main
+    - develop
+
+frontend-build:
+  stage: build
+  image: node:20-alpine
+  before_script:
+    - cd frontend
+    - npm ci
+  script:
+    - npm run build
+  artifacts:
+    paths:
+      - frontend/dist/
+    expire_in: 1 week
+  only:
+    - merge_requests
+    - main
+    - develop
+
+# ============================================
+# Docker Build
+# ============================================
+docker-build-backend:
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - cd backend
+    - docker build -t $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA .
+    - docker build -t $CI_REGISTRY_IMAGE/backend:latest .
+    - docker push $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY_IMAGE/backend:latest
+  only:
+    - main
+    - develop
+
+docker-build-frontend:
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - cd frontend
+    - docker build -t $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA .
+    - docker build -t $CI_REGISTRY_IMAGE/frontend:latest .
+    - docker push $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY_IMAGE/frontend:latest
+  only:
+    - main
+    - develop
+
+# ============================================
+# Security Scanning (Optional)
+# ============================================
+security-scan:
+  stage: test
+  image: python:3.11-slim
+  before_script:
+    - pip install safety bandit
+  script:
+    - cd backend
+    - safety check --file requirements.txt || true
+    - bandit -r app/ -f json -o bandit-report.json || true
+  artifacts:
+    paths:
+      - backend/bandit-report.json
+    expire_in: 1 week
+  allow_failure: true
+  only:
+    - merge_requests
+    - main
