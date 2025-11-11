@@ -17,6 +17,7 @@ import Calendar from './pages/Calendar';
 import Documents from './pages/Documents';
 import Meetings from './pages/Meetings';
 import Search from './pages/Search';
+import Whiteboards from './pages/Whiteboards';
 
 // Root Route
 const rootRoute = new RootRoute({
@@ -165,10 +166,7 @@ const whiteboardsRoute = new Route({
   path: '/whiteboards',
   component: () => (
     <ProtectedRoute>
-      <div className="p-6">
-        <h1 className="text-3xl font-bold">Whiteboards</h1>
-        <p className="mt-2 text-slate-600">Whiteboards page coming soon...</p>
-      </div>
+      <Whiteboards />
     </ProtectedRoute>
   ),
 });
