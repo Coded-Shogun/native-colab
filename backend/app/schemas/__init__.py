@@ -13,6 +13,15 @@ from .auth import (
     TokenResponse,
     RefreshTokenRequest,
 )
+from .workspace import (
+    WorkspaceCreate,
+    WorkspaceUpdate,
+    WorkspaceResponse,
+    WorkspaceMemberResponse,
+    WorkspaceWithMembersResponse,
+    WorkspaceInviteRequest,
+    WorkspaceRoleUpdate,
+)
 
 __all__ = [
     "UserCreate",
@@ -22,4 +31,11 @@ __all__ = [
     "Token",
     "TokenResponse",
     "RefreshTokenRequest",
+    "WorkspaceCreate",
+    "WorkspaceUpdate",
+    "WorkspaceResponse",
+    "WorkspaceMemberResponse",
+    "WorkspaceWithMembersResponse",
+    "WorkspaceInviteRequest",
+    "WorkspaceRoleUpdate",
 ]

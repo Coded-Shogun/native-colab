@@ -16,7 +16,16 @@ from app.db.session import Base
 from app.core.config import settings
 
 # Import all models so Alembic can detect them
-# from app.db.models import user, workspace, chat, project, document, etc.
+from app.db.models import (
+    User,
+    UserRole,
+    Workspace,
+    WorkspaceRole,
+    WorkspaceMember,
+    Team,
+    TeamRole,
+    TeamMember,
+)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -3,6 +3,7 @@ Pytest Configuration and Fixtures
 Provides reusable test fixtures for the entire test suite
 """
 
+import os
 import asyncio
 from typing import AsyncGenerator, Generator
 import pytest
@@ -10,6 +11,11 @@ import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.pool import NullPool
+
+# Load test environment variables before importing app
+from dotenv import load_dotenv
+env_file = os.path.join(os.path.dirname(__file__), '..', '.env.test')
+load_dotenv(env_file, override=True)
 
 from app.main import app
 from app.db.session import Base, get_db
