@@ -21,6 +21,17 @@ interface SocketContextType {
   onUserTyping: (callback: (data: any) => void) => () => void;
   startTyping: (channelId: number, userId: number) => void;
   stopTyping: (channelId: number, userId: number) => void;
+  // WebRTC methods
+  joinMeeting: (meetingId: string, userId: number) => void;
+  leaveMeeting: (meetingId: string, userId: number) => void;
+  sendWebRTCOffer: (targetSid: string, offer: RTCSessionDescriptionInit, meetingId: string) => void;
+  sendWebRTCAnswer: (targetSid: string, answer: RTCSessionDescriptionInit, meetingId: string) => void;
+  sendICECandidate: (targetSid: string, candidate: RTCIceCandidateInit, meetingId: string) => void;
+  onUserJoinedMeeting: (callback: (data: any) => void) => () => void;
+  onUserLeftMeeting: (callback: (data: any) => void) => () => void;
+  onWebRTCOffer: (callback: (data: any) => void) => () => void;
+  onWebRTCAnswer: (callback: (data: any) => void) => () => void;
+  onICECandidate: (callback: (data: any) => void) => () => void;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -201,6 +212,108 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // WebRTC Methods
+
+  // Join meeting room
+  const joinMeeting = (meetingId: string, userId: number) => {
+    if (socket && isConnected) {
+      socket.emit('join_meeting', { meeting_id: meetingId, user_id: userId }, (response: any) => {
+        if (response?.success) {
+          logger.info('Joined meeting', { meetingId });
+        }
+      });
+    }
+  };
+
+  // Leave meeting room
+  const leaveMeeting = (meetingId: string, userId: number) => {
+    if (socket && isConnected) {
+      socket.emit('leave_meeting', { meeting_id: meetingId, user_id: userId }, (response: any) => {
+        if (response?.success) {
+          logger.info('Left meeting', { meetingId });
+        }
+      });
+    }
+  };
+
+  // Send WebRTC offer
+  const sendWebRTCOffer = (targetSid: string, offer: RTCSessionDescriptionInit, meetingId: string) => {
+    if (socket && isConnected) {
+      socket.emit('webrtc_offer', {
+        target_sid: targetSid,
+        offer,
+        meeting_id: meetingId,
+      });
+    }
+  };
+
+  // Send WebRTC answer
+  const sendWebRTCAnswer = (targetSid: string, answer: RTCSessionDescriptionInit, meetingId: string) => {
+    if (socket && isConnected) {
+      socket.emit('webrtc_answer', {
+        target_sid: targetSid,
+        answer,
+        meeting_id: meetingId,
+      });
+    }
+  };
+
+  // Send ICE candidate
+  const sendICECandidate = (targetSid: string, candidate: RTCIceCandidateInit, meetingId: string) => {
+    if (socket && isConnected) {
+      socket.emit('webrtc_ice_candidate', {
+        target_sid: targetSid,
+        candidate,
+        meeting_id: meetingId,
+      });
+    }
+  };
+
+  // Listen for user joined meeting
+  const onUserJoinedMeeting = (callback: (data: any) => void) => {
+    if (!socket) return () => {};
+    socket.on('user_joined_meeting', callback);
+    return () => {
+      socket.off('user_joined_meeting', callback);
+    };
+  };
+
+  // Listen for user left meeting
+  const onUserLeftMeeting = (callback: (data: any) => void) => {
+    if (!socket) return () => {};
+    socket.on('user_left_meeting', callback);
+    return () => {
+      socket.off('user_left_meeting', callback);
+    };
+  };
+
+  // Listen for WebRTC offer
+  const onWebRTCOffer = (callback: (data: any) => void) => {
+    if (!socket) return () => {};
+    socket.on('webrtc_offer', callback);
+    return () => {
+      socket.off('webrtc_offer', callback);
+    };
+  };
+
+  // Listen for WebRTC answer
+  const onWebRTCAnswer = (callback: (data: any) => void) => {
+    if (!socket) return () => {};
+    socket.on('webrtc_answer', callback);
+    return () => {
+      socket.off('webrtc_answer', callback);
+    };
+  };
+
+  // Listen for ICE candidate
+  const onICECandidate = (callback: (data: any) => void) => {
+    if (!socket) return () => {};
+    socket.on('webrtc_ice_candidate', callback);
+    return () => {
+      socket.off('webrtc_ice_candidate', callback);
+    };
+  };
+
   const value = {
     socket,
     isConnected,
@@ -214,6 +327,17 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     onUserTyping,
     startTyping,
     stopTyping,
+    // WebRTC
+    joinMeeting,
+    leaveMeeting,
+    sendWebRTCOffer,
+    sendWebRTCAnswer,
+    sendICECandidate,
+    onUserJoinedMeeting,
+    onUserLeftMeeting,
+    onWebRTCOffer,
+    onWebRTCAnswer,
+    onICECandidate,
   };
 
   return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;

@@ -201,6 +201,98 @@ async def typing_stop(sid: str, data: dict):
     }, room=room_name, skip_sid=sid)
 
 
+# WebRTC Signaling Events
+
+@sio.event
+async def join_meeting(sid: str, data: dict):
+    """Join a video meeting room"""
+    meeting_id = data.get('meeting_id')
+    user_id = data.get('user_id')
+    room_name = f"meeting_{meeting_id}"
+
+    await sio.enter_room(sid, room_name)
+
+    # Notify other participants
+    await sio.emit('user_joined_meeting', {
+        'meeting_id': meeting_id,
+        'user_id': user_id,
+        'sid': sid
+    }, room=room_name, skip_sid=sid)
+
+    print(f"Client {sid} joined meeting {meeting_id}")
+    return {'success': True, 'meeting_id': meeting_id}
+
+
+@sio.event
+async def leave_meeting(sid: str, data: dict):
+    """Leave a video meeting room"""
+    meeting_id = data.get('meeting_id')
+    user_id = data.get('user_id')
+    room_name = f"meeting_{meeting_id}"
+
+    # Notify other participants before leaving
+    await sio.emit('user_left_meeting', {
+        'meeting_id': meeting_id,
+        'user_id': user_id,
+        'sid': sid
+    }, room=room_name, skip_sid=sid)
+
+    await sio.leave_room(sid, room_name)
+    print(f"Client {sid} left meeting {meeting_id}")
+    return {'success': True}
+
+
+@sio.event
+async def webrtc_offer(sid: str, data: dict):
+    """Forward WebRTC offer to target peer"""
+    target_sid = data.get('target_sid')
+    offer = data.get('offer')
+    meeting_id = data.get('meeting_id')
+
+    if target_sid:
+        await sio.emit('webrtc_offer', {
+            'offer': offer,
+            'from_sid': sid,
+            'meeting_id': meeting_id
+        }, room=target_sid)
+
+    return {'success': True}
+
+
+@sio.event
+async def webrtc_answer(sid: str, data: dict):
+    """Forward WebRTC answer to target peer"""
+    target_sid = data.get('target_sid')
+    answer = data.get('answer')
+    meeting_id = data.get('meeting_id')
+
+    if target_sid:
+        await sio.emit('webrtc_answer', {
+            'answer': answer,
+            'from_sid': sid,
+            'meeting_id': meeting_id
+        }, room=target_sid)
+
+    return {'success': True}
+
+
+@sio.event
+async def webrtc_ice_candidate(sid: str, data: dict):
+    """Forward ICE candidate to target peer"""
+    target_sid = data.get('target_sid')
+    candidate = data.get('candidate')
+    meeting_id = data.get('meeting_id')
+
+    if target_sid:
+        await sio.emit('webrtc_ice_candidate', {
+            'candidate': candidate,
+            'from_sid': sid,
+            'meeting_id': meeting_id
+        }, room=target_sid)
+
+    return {'success': True}
+
+
 # Helper functions for emitting events from API routes
 
 async def emit_notification(user_id: int, notification: dict):
