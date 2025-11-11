@@ -16,10 +16,15 @@ from app.db.session import Base, get_db
 from app.core.config import settings
 
 # Test database URL
-TEST_DATABASE_URL = settings.DATABASE_URL.replace(
-    settings.POSTGRES_DB,
-    f"{settings.POSTGRES_DB}_test"
-)
+# Use in-memory SQLite for tests if DATABASE_URL is not set
+if hasattr(settings, 'POSTGRES_DB') and settings.POSTGRES_DB:
+    TEST_DATABASE_URL = settings.DATABASE_URL.replace(
+        settings.POSTGRES_DB,
+        f"{settings.POSTGRES_DB}_test"
+    )
+else:
+    # Use the DATABASE_URL as-is (SQLite or other)
+    TEST_DATABASE_URL = settings.DATABASE_URL
 
 
 # ============================================
