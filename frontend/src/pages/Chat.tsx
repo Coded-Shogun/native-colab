@@ -6,19 +6,23 @@
 import { useState, useEffect, useRef } from 'react';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useSocket } from '../contexts/SocketContext';
 import { chatService } from '../services/chat';
 import type { Channel, Message } from '../types';
 
 export default function Chat() {
   const { currentWorkspace } = useWorkspace();
   const { user } = useAuth();
+  const { isConnected, joinChannel, leaveChannel, sendMessage, onNewMessage, startTyping, stopTyping } = useSocket();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<Set<number>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load channels
   useEffect(() => {
@@ -38,6 +42,27 @@ export default function Chat() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Join channel and listen for real-time messages
+  useEffect(() => {
+    if (!selectedChannel || !isConnected) return;
+
+    // Join the channel room
+    joinChannel(selectedChannel.id);
+
+    // Listen for new messages
+    const unsubscribeMessages = onNewMessage((message: any) => {
+      if (message.channel_id === selectedChannel.id) {
+        setMessages((prev) => [...prev, message]);
+      }
+    });
+
+    // Cleanup: leave channel and unsubscribe
+    return () => {
+      leaveChannel(selectedChannel.id);
+      unsubscribeMessages();
+    };
+  }, [selectedChannel, isConnected]);
 
   const loadChannels = async () => {
     if (!currentWorkspace) return;
@@ -67,19 +92,61 @@ export default function Chat() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedChannel || !messageText.trim() || isSending) return;
+    if (!selectedChannel || !messageText.trim() || isSending || !user) return;
 
     try {
       setIsSending(true);
-      const newMessage = await chatService.sendMessage(selectedChannel.id, {
-        content: messageText,
-      });
-      setMessages([...messages, newMessage]);
-      setMessageText('');
+
+      // Use Socket.io for real-time message sending if connected
+      if (isConnected) {
+        sendMessage(selectedChannel.id, { content: messageText });
+        // Clear input immediately for better UX
+        setMessageText('');
+        // Stop typing indicator
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
+          typingTimeoutRef.current = null;
+        }
+        stopTyping(selectedChannel.id, user.id);
+      } else {
+        // Fallback to REST API if socket not connected
+        const newMessage = await chatService.sendMessage(selectedChannel.id, {
+          content: messageText,
+        });
+        setMessages([...messages, newMessage]);
+        setMessageText('');
+      }
     } catch (error) {
       console.error('Failed to send message:', error);
     } finally {
       setIsSending(false);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setMessageText(value);
+
+    // Send typing indicator
+    if (selectedChannel && user && isConnected && value.trim()) {
+      startTyping(selectedChannel.id, user.id);
+
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+
+      // Stop typing after 3 seconds of inactivity
+      typingTimeoutRef.current = setTimeout(() => {
+        stopTyping(selectedChannel.id, user.id);
+      }, 3000);
+    } else if (selectedChannel && user && isConnected && !value.trim()) {
+      // Stop typing if input is cleared
+      stopTyping(selectedChannel.id, user.id);
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
     }
   };
 
@@ -176,15 +243,23 @@ export default function Chat() {
         <div className="flex-1 flex flex-col bg-slate-50 dark:bg-slate-900">
           {/* Chat Header */}
           <div className="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center">
-                <span className="mr-2">{selectedChannel.is_private ? '🔒' : '#'}</span>
-                {selectedChannel.name}
-              </h3>
-              {selectedChannel.description && (
-                <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
-                  {selectedChannel.description}
-                </p>
+            <div className="flex items-center space-x-3">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center">
+                  <span className="mr-2">{selectedChannel.is_private ? '🔒' : '#'}</span>
+                  {selectedChannel.name}
+                </h3>
+                {selectedChannel.description && (
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+                    {selectedChannel.description}
+                  </p>
+                )}
+              </div>
+              {isConnected && (
+                <div className="flex items-center space-x-1 text-xs text-green-600 dark:text-green-400">
+                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                  <span>Live</span>
+                </div>
               )}
             </div>
             <div className="flex items-center space-x-2">
@@ -252,15 +327,27 @@ export default function Chat() {
 
           {/* Message Input */}
           <div className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-4">
+            {typingUsers.size > 0 && (
+              <div className="px-4 pb-2 text-xs text-slate-500 dark:text-slate-400">
+                {typingUsers.size === 1 ? 'Someone is' : `${typingUsers.size} people are`} typing...
+              </div>
+            )}
             <form onSubmit={handleSendMessage} className="flex space-x-4">
-              <input
-                type="text"
-                value={messageText}
-                onChange={(e) => setMessageText(e.target.value)}
-                placeholder={`Message #${selectedChannel.name}`}
-                className="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-700 border-0 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={isSending}
-              />
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  value={messageText}
+                  onChange={handleInputChange}
+                  placeholder={`Message #${selectedChannel.name}`}
+                  className="w-full px-4 py-3 bg-slate-100 dark:bg-slate-700 border-0 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={isSending}
+                />
+                {!isConnected && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" title="Disconnected" />
+                  </div>
+                )}
+              </div>
               <button
                 type="submit"
                 disabled={!messageText.trim() || isSending}

@@ -7,6 +7,8 @@ import { RouterProvider } from '@tanstack/react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext';
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
+import { SocketProvider } from './contexts/SocketContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import { ErrorBoundary } from './components';
 import { router } from './routes';
 import './App.css';
@@ -28,7 +30,11 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <WorkspaceProvider>
-            <RouterProvider router={router} />
+            <SocketProvider>
+              <NotificationProvider>
+                <RouterProvider router={router} />
+              </NotificationProvider>
+            </SocketProvider>
           </WorkspaceProvider>
         </AuthProvider>
       </QueryClientProvider>
