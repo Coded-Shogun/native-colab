@@ -13,6 +13,10 @@ import Chat from './pages/Chat';
 import Projects from './pages/Projects';
 import Tasks from './pages/Tasks';
 import TimeTracking from './pages/TimeTracking';
+import Calendar from './pages/Calendar';
+import Documents from './pages/Documents';
+import Meetings from './pages/Meetings';
+import Search from './pages/Search';
 
 // Root Route
 const rootRoute = new RootRoute({
@@ -121,10 +125,7 @@ const calendarRoute = new Route({
   path: '/calendar',
   component: () => (
     <ProtectedRoute>
-      <div className="p-6">
-        <h1 className="text-3xl font-bold">Calendar</h1>
-        <p className="mt-2 text-slate-600">Calendar page coming soon...</p>
-      </div>
+      <Calendar />
     </ProtectedRoute>
   ),
 });
@@ -134,10 +135,7 @@ const documentsRoute = new Route({
   path: '/documents',
   component: () => (
     <ProtectedRoute>
-      <div className="p-6">
-        <h1 className="text-3xl font-bold">Documents</h1>
-        <p className="mt-2 text-slate-600">Documents page coming soon...</p>
-      </div>
+      <Documents />
     </ProtectedRoute>
   ),
 });
@@ -157,10 +155,7 @@ const meetingsRoute = new Route({
   path: '/meetings',
   component: () => (
     <ProtectedRoute>
-      <div className="p-6">
-        <h1 className="text-3xl font-bold">Meetings</h1>
-        <p className="mt-2 text-slate-600">Meetings page coming soon...</p>
-      </div>
+      <Meetings />
     </ProtectedRoute>
   ),
 });
@@ -183,10 +178,7 @@ const searchRoute = new Route({
   path: '/search',
   component: () => (
     <ProtectedRoute>
-      <div className="p-6">
-        <h1 className="text-3xl font-bold">Search</h1>
-        <p className="mt-2 text-slate-600">Search page coming soon...</p>
-      </div>
+      <Search />
     </ProtectedRoute>
   ),
 });
