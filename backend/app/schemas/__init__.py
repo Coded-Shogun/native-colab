@@ -22,6 +22,16 @@ from .workspace import (
     WorkspaceInviteRequest,
     WorkspaceRoleUpdate,
 )
+from .team import (
+    TeamCreate,
+    TeamUpdate,
+    TeamResponse,
+    TeamMemberResponse,
+    TeamWithMembersResponse,
+    TeamListResponse,
+    TeamMemberAdd,
+    TeamMemberRoleUpdate,
+)
 
 __all__ = [
     "UserCreate",
@@ -38,4 +48,12 @@ __all__ = [
     "WorkspaceWithMembersResponse",
     "WorkspaceInviteRequest",
     "WorkspaceRoleUpdate",
+    "TeamCreate",
+    "TeamUpdate",
+    "TeamResponse",
+    "TeamMemberResponse",
+    "TeamWithMembersResponse",
+    "TeamListResponse",
+    "TeamMemberAdd",
+    "TeamMemberRoleUpdate",
 ]
