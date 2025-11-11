@@ -68,6 +68,17 @@ from .whiteboard import (
     ElementType,
     WhiteboardAccessLevel,
 )
+from .meeting import (
+    Meeting,
+    MeetingParticipant,
+    MeetingRecording,
+    MeetingChatMessage,
+    MeetingType,
+    MeetingStatus,
+    ParticipantRole,
+    ParticipantStatus,
+    RecordingStatus,
+)
 
 __all__ = [
     "User",
@@ -127,4 +138,13 @@ __all__ = [
     "WhiteboardSnapshot",
     "ElementType",
     "WhiteboardAccessLevel",
+    "Meeting",
+    "MeetingParticipant",
+    "MeetingRecording",
+    "MeetingChatMessage",
+    "MeetingType",
+    "MeetingStatus",
+    "ParticipantRole",
+    "ParticipantStatus",
+    "RecordingStatus",
 ]
