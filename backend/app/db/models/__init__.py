@@ -14,6 +14,15 @@ from .project import (
     TaskComment,
 )
 from .time_entry import TimeEntry
+from .chat import (
+    Channel,
+    ChannelMember,
+    ChannelMemberRole,
+    Message,
+    MessageType,
+    DirectMessage,
+    MessageReaction,
+)
 
 __all__ = [
     "User",
@@ -31,4 +40,11 @@ __all__ = [
     "TaskPriority",
     "TaskComment",
     "TimeEntry",
+    "Channel",
+    "ChannelMember",
+    "ChannelMemberRole",
+    "Message",
+    "MessageType",
+    "DirectMessage",
+    "MessageReaction",
 ]
