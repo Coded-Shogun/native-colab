@@ -1,23 +1,29 @@
 /**
  * Router Configuration
- * Using TanStack Router for type-safe routing
+ * Using TanStack Router for type-safe routing with lazy loading
  */
 
 import { Router, Route, RootRoute, Outlet } from '@tanstack/react-router';
+import { lazy, Suspense } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import DashboardLayout from './components/DashboardLayout';
+import { PageLoader } from './components/LoadingSpinner';
+
+// Eager load auth pages for faster initial access
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import Chat from './pages/Chat';
-import Projects from './pages/Projects';
-import Tasks from './pages/Tasks';
-import TimeTracking from './pages/TimeTracking';
-import Calendar from './pages/Calendar';
-import Documents from './pages/Documents';
-import Meetings from './pages/Meetings';
-import Search from './pages/Search';
-import Whiteboards from './pages/Whiteboards';
+
+// Lazy load feature pages for better performance
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Chat = lazy(() => import('./pages/Chat'));
+const Projects = lazy(() => import('./pages/Projects'));
+const Tasks = lazy(() => import('./pages/Tasks'));
+const TimeTracking = lazy(() => import('./pages/TimeTracking'));
+const Calendar = lazy(() => import('./pages/Calendar'));
+const Documents = lazy(() => import('./pages/Documents'));
+const Meetings = lazy(() => import('./pages/Meetings'));
+const Search = lazy(() => import('./pages/Search'));
+const Whiteboards = lazy(() => import('./pages/Whiteboards'));
 
 // Root Route
 const rootRoute = new RootRoute({
@@ -37,19 +43,12 @@ const registerRoute = new Route({
   component: Register,
 });
 
-// Protected Routes Wrapper
+// Protected Routes Wrapper with Lazy Loading Support
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-600 dark:text-slate-400">Loading...</p>
-        </div>
-      </div>
-    );
+    return <PageLoader message="Loading..." />;
   }
 
   if (!isAuthenticated) {
@@ -57,7 +56,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return null;
   }
 
-  return <DashboardLayout>{children}</DashboardLayout>;
+  return (
+    <DashboardLayout>
+      <Suspense fallback={<PageLoader message="Loading page..." />}>
+        {children}
+      </Suspense>
+    </DashboardLayout>
+  );
 }
 
 // Dashboard Route
