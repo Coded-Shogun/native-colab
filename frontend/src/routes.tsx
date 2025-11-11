@@ -9,6 +9,10 @@ import DashboardLayout from './components/DashboardLayout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Chat from './pages/Chat';
+import Projects from './pages/Projects';
+import Tasks from './pages/Tasks';
+import TimeTracking from './pages/TimeTracking';
 
 // Root Route
 const rootRoute = new RootRoute({
@@ -81,16 +85,13 @@ const indexRoute = new Route({
   },
 });
 
-// Placeholder routes for other pages
+// Projects Route
 const projectsRoute = new Route({
   getParentRoute: () => rootRoute,
   path: '/projects',
   component: () => (
     <ProtectedRoute>
-      <div className="p-6">
-        <h1 className="text-3xl font-bold">Projects</h1>
-        <p className="mt-2 text-slate-600">Projects page coming soon...</p>
-      </div>
+      <Projects />
     </ProtectedRoute>
   ),
 });
@@ -100,10 +101,7 @@ const tasksRoute = new Route({
   path: '/tasks',
   component: () => (
     <ProtectedRoute>
-      <div className="p-6">
-        <h1 className="text-3xl font-bold">Tasks</h1>
-        <p className="mt-2 text-slate-600">Tasks page coming soon...</p>
-      </div>
+      <Tasks />
     </ProtectedRoute>
   ),
 });
@@ -113,10 +111,7 @@ const chatRoute = new Route({
   path: '/chat',
   component: () => (
     <ProtectedRoute>
-      <div className="p-6">
-        <h1 className="text-3xl font-bold">Chat</h1>
-        <p className="mt-2 text-slate-600">Chat page coming soon...</p>
-      </div>
+      <Chat />
     </ProtectedRoute>
   ),
 });
@@ -152,10 +147,7 @@ const timeRoute = new Route({
   path: '/time',
   component: () => (
     <ProtectedRoute>
-      <div className="p-6">
-        <h1 className="text-3xl font-bold">Time Tracking</h1>
-        <p className="mt-2 text-slate-600">Time tracking page coming soon...</p>
-      </div>
+      <TimeTracking />
     </ProtectedRoute>
   ),
 });
