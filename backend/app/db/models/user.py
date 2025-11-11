@@ -75,6 +75,31 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan"
     )
+    webhooks = relationship(
+        "Webhook",
+        back_populates="creator",
+        cascade="all, delete-orphan",
+        foreign_keys="Webhook.created_by"
+    )
+    integration_connections = relationship(
+        "IntegrationConnection",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    search_indexes = relationship(
+        "SearchIndex",
+        back_populates="user"
+    )
+    search_history = relationship(
+        "SearchHistory",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    saved_searches = relationship(
+        "SavedSearch",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<User(id={self.id}, email='{self.email}', role='{self.role}')>"

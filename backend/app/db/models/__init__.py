@@ -85,6 +85,17 @@ from .search import (
     SavedSearch,
     ContentType,
 )
+from .webhook import (
+    Webhook,
+    WebhookDelivery,
+    Integration,
+    IntegrationConnection,
+    WebhookEventType,
+    WebhookStatus,
+    DeliveryStatus,
+    IntegrationType,
+    IntegrationStatus,
+)
 
 __all__ = [
     "User",
@@ -157,4 +168,13 @@ __all__ = [
     "SearchHistory",
     "SavedSearch",
     "ContentType",
+    "Webhook",
+    "WebhookDelivery",
+    "Integration",
+    "IntegrationConnection",
+    "WebhookEventType",
+    "WebhookStatus",
+    "DeliveryStatus",
+    "IntegrationType",
+    "IntegrationStatus",
 ]

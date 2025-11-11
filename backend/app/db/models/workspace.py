@@ -67,6 +67,31 @@ class Workspace(Base):
         back_populates="workspace",
         cascade="all, delete-orphan"
     )
+    webhooks = relationship(
+        "Webhook",
+        back_populates="workspace",
+        cascade="all, delete-orphan"
+    )
+    integration_connections = relationship(
+        "IntegrationConnection",
+        back_populates="workspace",
+        cascade="all, delete-orphan"
+    )
+    search_indexes = relationship(
+        "SearchIndex",
+        back_populates="workspace",
+        cascade="all, delete-orphan"
+    )
+    search_history = relationship(
+        "SearchHistory",
+        back_populates="workspace",
+        cascade="all, delete-orphan"
+    )
+    saved_searches = relationship(
+        "SavedSearch",
+        back_populates="workspace",
+        cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<Workspace(id={self.id}, name='{self.name}', slug='{self.slug}')>"
