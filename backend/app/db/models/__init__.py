@@ -60,6 +60,14 @@ from .signature import (
     SignatureType,
     FieldType,
 )
+from .whiteboard import (
+    Whiteboard,
+    WhiteboardElement,
+    WhiteboardParticipant,
+    WhiteboardSnapshot,
+    ElementType,
+    WhiteboardAccessLevel,
+)
 
 __all__ = [
     "User",
@@ -113,4 +121,10 @@ __all__ = [
     "SignerStatus",
     "SignatureType",
     "FieldType",
+    "Whiteboard",
+    "WhiteboardElement",
+    "WhiteboardParticipant",
+    "WhiteboardSnapshot",
+    "ElementType",
+    "WhiteboardAccessLevel",
 ]
