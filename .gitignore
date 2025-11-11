@@ -168,6 +168,12 @@ coverage/
 test-results/
 playwright-report/
 
+# Cypress
+cypress/screenshots/
+cypress/videos/
+cypress/downloads/
+cypress.env.json
+
 # Documentation Build
 docs/_build/
 docs/.doctrees/

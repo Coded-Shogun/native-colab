@@ -37,8 +37,15 @@ src/
 ├── lib/__tests__/
 │   └── validation.test.ts       # Validation utility tests
 └── contexts/__tests__/
-    ├── SocketContext.test.tsx   # Socket.io context tests (NEW)
-    └── NotificationContext.test.tsx  # Notification tests (NEW)
+    ├── SocketContext.test.tsx   # Socket.io context tests
+    └── NotificationContext.test.tsx  # Notification tests
+
+cypress/
+└── e2e/
+    ├── auth.cy.ts                # Authentication E2E tests (NEW)
+    ├── chat-realtime.cy.ts       # Real-time chat E2E tests (NEW)
+    ├── notifications.cy.ts       # Notifications E2E tests (NEW)
+    └── meetings-webrtc.cy.ts     # WebRTC meetings E2E tests (NEW)
 ```
 
 ## Running Tests
@@ -85,7 +92,7 @@ cd frontend
 npm install
 ```
 
-#### Run All Tests
+#### Run Unit/Component Tests
 
 ```bash
 npm test
@@ -107,6 +114,61 @@ npm test -- --coverage
 
 ```bash
 npm test -- SocketContext.test.tsx
+```
+
+### E2E Tests with Cypress
+
+#### Open Cypress Test Runner
+
+```bash
+npm run cypress
+```
+
+This opens the Cypress GUI where you can:
+- Select and run individual test files
+- Watch tests execute in real browser
+- Time travel through test steps
+- Debug failed tests
+
+#### Run E2E Tests Headlessly
+
+```bash
+npm run cypress:headless
+```
+
+#### Run E2E with Auto Server Start
+
+```bash
+# Starts dev server, waits for it, then runs tests
+npm run e2e
+
+# Headless mode
+npm run e2e:headless
+```
+
+#### Run All Tests (Unit + E2E)
+
+```bash
+npm run test:all
+```
+
+#### Run Specific E2E Test
+
+```bash
+npx cypress run --spec "cypress/e2e/auth.cy.ts"
+```
+
+#### E2E Test with Browser Selection
+
+```bash
+# Chrome
+npx cypress run --browser chrome
+
+# Firefox
+npx cypress run --browser firefox
+
+# Edge
+npx cypress run --browser edge
 ```
 
 ## Test Coverage
@@ -177,6 +239,53 @@ npm test -- SocketContext.test.tsx
   - Multiple notification types
 
 **Total Frontend Coverage**: 38+ test cases
+
+### E2E Test Coverage (NEW)
+
+- **Authentication Flow**: 15+ test cases
+  - User registration with validation
+  - User login and logout
+  - Protected route access
+  - Session persistence
+  - Token management
+
+- **Real-Time Chat**: 25+ test cases
+  - Socket.io connection lifecycle
+  - Channel management and selection
+  - Real-time message sending/receiving
+  - Message broadcasting to multiple users
+  - Typing indicators
+  - Message history and pagination
+  - Auto-scroll behavior
+  - Fallback to REST API
+  - Error handling
+
+- **Notifications**: 20+ test cases
+  - Notification bell and dropdown
+  - Unread count tracking
+  - Real-time notification delivery
+  - Toast notifications with auto-dismiss
+  - Browser notification API
+  - Multiple notification types
+  - Mark as read functionality
+  - Notification persistence
+  - Accessibility features
+
+- **WebRTC Meetings**: 30+ test cases
+  - Meeting room access and creation
+  - WebRTC signaling (SDP exchange)
+  - ICE candidate exchange
+  - Media device management
+  - Participant management
+  - Video display and layouts
+  - Meeting controls
+  - In-meeting chat
+  - Connection quality monitoring
+  - Screen sharing
+  - Error handling and cleanup
+  - Accessibility
+
+**Total E2E Coverage**: 90+ test cases
 
 ## Real-Time Feature Tests
 
@@ -417,11 +526,13 @@ lhci autorun
 
 To further improve test coverage:
 
-1. **E2E Tests**: Add Playwright/Cypress tests for critical user flows
+1. ✅ **E2E Tests**: Cypress tests for critical user flows (IMPLEMENTED)
 2. **Load Tests**: Implement performance testing with Locust
 3. **Contract Tests**: Add API contract testing with Pact
-4. **Visual Tests**: Add visual regression testing
+4. **Visual Tests**: Add visual regression testing with Percy/Chromatic
 5. **Mutation Tests**: Add mutation testing to validate test quality
+6. **Multi-User E2E**: Add tests with multiple real browser instances for real-time features
+7. **Mobile E2E**: Add mobile viewport testing with Cypress
 
 ## Resources
 
@@ -430,6 +541,9 @@ To further improve test coverage:
 - [React Testing Library](https://testing-library.com/react)
 - [FastAPI Testing](https://fastapi.tiangolo.com/tutorial/testing/)
 - [Socket.io Testing](https://socket.io/docs/v4/testing/)
+- [Cypress Documentation](https://docs.cypress.io/)
+- [Cypress Best Practices](https://docs.cypress.io/guides/references/best-practices)
+- [Testing Library Cypress](https://testing-library.com/docs/cypress-testing-library/intro/)
 
 ## Support
 
