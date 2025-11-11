@@ -13,6 +13,7 @@ from .project import (
     TaskPriority,
     TaskComment,
 )
+from .time_entry import TimeEntry
 
 __all__ = [
     "User",
@@ -29,4 +30,5 @@ __all__ = [
     "TaskStatus",
     "TaskPriority",
     "TaskComment",
+    "TimeEntry",
 ]

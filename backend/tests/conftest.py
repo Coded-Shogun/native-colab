@@ -211,3 +211,26 @@ async def test_workspace(
     )
     assert response.status_code == 201
     return response.json()
+
+
+# ============================================
+# Project Fixtures
+# ============================================
+@pytest_asyncio.fixture
+async def test_project(
+    authenticated_client: AsyncClient,
+    test_workspace
+):
+    """
+    Create a test project in the test workspace.
+    """
+    response = await authenticated_client.post(
+        "/api/v1/projects",
+        json={
+            "workspace_id": test_workspace["id"],
+            "name": "Test Project",
+            "description": "A test project"
+        }
+    )
+    assert response.status_code == 201
+    return response.json()
