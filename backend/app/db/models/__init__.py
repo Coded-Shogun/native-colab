@@ -48,6 +48,18 @@ from .document import (
     DocumentComment,
     DocumentSharePermission,
 )
+from .signature import (
+    SignatureRequest,
+    Signer,
+    SignatureField,
+    Signature,
+    SignatureAuditLog,
+    SignatureStatus,
+    SigningOrder,
+    SignerStatus,
+    SignatureType,
+    FieldType,
+)
 
 __all__ = [
     "User",
@@ -91,4 +103,14 @@ __all__ = [
     "DocumentShare",
     "DocumentComment",
     "DocumentSharePermission",
+    "SignatureRequest",
+    "Signer",
+    "SignatureField",
+    "Signature",
+    "SignatureAuditLog",
+    "SignatureStatus",
+    "SigningOrder",
+    "SignerStatus",
+    "SignatureType",
+    "FieldType",
 ]
