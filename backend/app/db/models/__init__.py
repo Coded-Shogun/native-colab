@@ -23,6 +23,16 @@ from .chat import (
     DirectMessage,
     MessageReaction,
 )
+from .calendar import (
+    Calendar,
+    Event,
+    EventAttendee,
+    EventReminder,
+    EventType,
+    EventVisibility,
+    RSVPStatus,
+    ReminderType,
+)
 
 __all__ = [
     "User",
@@ -47,4 +57,12 @@ __all__ = [
     "MessageType",
     "DirectMessage",
     "MessageReaction",
+    "Calendar",
+    "Event",
+    "EventAttendee",
+    "EventReminder",
+    "EventType",
+    "EventVisibility",
+    "RSVPStatus",
+    "ReminderType",
 ]
