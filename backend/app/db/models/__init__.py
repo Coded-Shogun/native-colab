@@ -40,6 +40,14 @@ from .notification import (
     NotificationChannel,
     NotificationPriority,
 )
+from .document import (
+    Folder,
+    Document,
+    DocumentVersion,
+    DocumentShare,
+    DocumentComment,
+    DocumentSharePermission,
+)
 
 __all__ = [
     "User",
@@ -77,4 +85,10 @@ __all__ = [
     "NotificationType",
     "NotificationChannel",
     "NotificationPriority",
+    "Folder",
+    "Document",
+    "DocumentVersion",
+    "DocumentShare",
+    "DocumentComment",
+    "DocumentSharePermission",
 ]
