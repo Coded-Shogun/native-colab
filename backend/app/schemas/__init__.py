@@ -32,6 +32,22 @@ from .team import (
     TeamMemberAdd,
     TeamMemberRoleUpdate,
 )
+from .project import (
+    ProjectCreate,
+    ProjectUpdate,
+    ProjectResponse,
+    ProjectListResponse,
+    TaskCreate,
+    TaskUpdate,
+    TaskResponse,
+    TaskListResponse,
+    TaskStatusUpdate,
+    TaskAssigneeUpdate,
+    TaskWithCommentsResponse,
+    TaskCommentCreate,
+    TaskCommentUpdate,
+    TaskCommentResponse,
+)
 
 __all__ = [
     "UserCreate",
@@ -56,4 +72,18 @@ __all__ = [
     "TeamListResponse",
     "TeamMemberAdd",
     "TeamMemberRoleUpdate",
+    "ProjectCreate",
+    "ProjectUpdate",
+    "ProjectResponse",
+    "ProjectListResponse",
+    "TaskCreate",
+    "TaskUpdate",
+    "TaskResponse",
+    "TaskListResponse",
+    "TaskStatusUpdate",
+    "TaskAssigneeUpdate",
+    "TaskWithCommentsResponse",
+    "TaskCommentCreate",
+    "TaskCommentUpdate",
+    "TaskCommentResponse",
 ]
