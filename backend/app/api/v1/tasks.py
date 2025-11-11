@@ -18,6 +18,8 @@ from app.db.models import (
     TaskStatus,
     TaskComment,
     WorkspaceMember,
+    NotificationType,
+    NotificationPriority,
 )
 from app.schemas.project import (
     TaskCreate,
@@ -32,6 +34,8 @@ from app.schemas.project import (
     TaskCommentResponse,
 )
 from app.core.deps import get_current_user
+from app.services import notification_service
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -517,6 +521,7 @@ async def update_task_assignee(
                 detail="Assignee must be a workspace member"
             )
 
+    old_assignee_id = task.assignee_id
     task.assignee_id = assignee_update.assignee_id
     await db.commit()
     await db.refresh(task)
@@ -529,6 +534,30 @@ async def update_task_assignee(
     )
     result = await db.execute(stmt)
     task = result.scalar_one()
+
+    # Send notification if task was assigned to a new user
+    if assignee_update.assignee_id and assignee_update.assignee_id != old_assignee_id:
+        try:
+            await notification_service.create_notification(
+                db=db,
+                user_id=assignee_update.assignee_id,
+                notification_type=NotificationType.TASK_ASSIGNED,
+                title=f"Task Assigned: {task.title}",
+                message=f"{current_user.full_name or current_user.email} assigned you a task",
+                priority=NotificationPriority.NORMAL,
+                action_url=f"{settings.FRONTEND_URL}/projects/{task.project_id}/tasks/{task.id}",
+                task_id=task.id,
+                project_id=task.project_id,
+                metadata={
+                    "assigner_name": current_user.full_name or current_user.email,
+                    "task_due_date": task.due_date.isoformat() if task.due_date else None,
+                },
+                send_immediately=True
+            )
+        except Exception as e:
+            # Log but don't fail task assignment if notification fails
+            import logging
+            logging.getLogger(__name__).error(f"Failed to send task assignment notification: {e}")
 
     # Count comments
     comment_count_stmt = select(func.count(TaskComment.id)).where(TaskComment.task_id == task.id)

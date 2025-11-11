@@ -18,6 +18,8 @@ from app.db.models import (
     EventAttendee,
     EventReminder,
     RSVPStatus,
+    NotificationType,
+    NotificationPriority,
 )
 from app.schemas.calendar import (
     EventCreate,
@@ -35,6 +37,8 @@ from app.schemas.calendar import (
     AvailabilityResponse,
 )
 from app.core.deps import get_current_user
+from app.services import notification_service
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -229,6 +233,7 @@ async def create_event(
     db.add(creator_attendee)
 
     # Add other attendees
+    invited_attendee_ids = []
     if event_data.attendee_ids:
         for attendee_id in event_data.attendee_ids:
             if attendee_id != current_user.id:
@@ -239,9 +244,35 @@ async def create_event(
                     rsvp_status=RSVPStatus.PENDING
                 )
                 db.add(attendee)
+                invited_attendee_ids.append(attendee_id)
 
     await db.commit()
     await db.refresh(new_event)
+
+    # Send event invitation notifications to invited attendees
+    for attendee_id in invited_attendee_ids:
+        try:
+            await notification_service.create_notification(
+                db=db,
+                user_id=attendee_id,
+                notification_type=NotificationType.EVENT_INVITATION,
+                title=f"Event Invitation: {new_event.title}",
+                message=f"{current_user.full_name or current_user.email} invited you to an event",
+                priority=NotificationPriority.NORMAL,
+                action_url=f"{settings.FRONTEND_URL}/calendar/events/{new_event.id}",
+                event_id=new_event.id,
+                metadata={
+                    "organizer_name": current_user.full_name or current_user.email,
+                    "event_start": new_event.start_time.isoformat(),
+                    "event_end": new_event.end_time.isoformat(),
+                    "event_location": new_event.location,
+                },
+                send_immediately=True
+            )
+        except Exception as e:
+            # Log but don't fail event creation if notification fails
+            import logging
+            logging.getLogger(__name__).error(f"Failed to send event invitation notification: {e}")
 
     return await build_event_response(new_event, db)
 

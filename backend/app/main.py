@@ -120,7 +120,7 @@ async def metrics():
 # API Routes
 # ============================================
 
-from app.api.v1 import auth, users, workspaces, teams, projects, tasks, time_entries, channels, messages, calendars, events
+from app.api.v1 import auth, users, workspaces, teams, projects, tasks, time_entries, channels, messages, calendars, events, notifications
 
 # Include routers
 app.include_router(auth.router, prefix=f"{settings.API_V1_PREFIX}/auth", tags=["Authentication"])
@@ -134,6 +134,7 @@ app.include_router(channels.router, prefix=f"{settings.API_V1_PREFIX}/channels",
 app.include_router(messages.router, prefix=f"{settings.API_V1_PREFIX}/messages", tags=["Chat - Messages"])
 app.include_router(calendars.router, prefix=f"{settings.API_V1_PREFIX}/calendars", tags=["Calendar - Calendars"])
 app.include_router(events.router, prefix=f"{settings.API_V1_PREFIX}/events", tags=["Calendar - Events"])
+app.include_router(notifications.router, prefix=f"{settings.API_V1_PREFIX}/notifications", tags=["Notifications"])
 
 # TODO: Include remaining API routers
 # from app.api.v1 import chat, projects, documents, etc.

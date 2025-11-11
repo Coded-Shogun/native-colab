@@ -33,6 +33,13 @@ from .calendar import (
     RSVPStatus,
     ReminderType,
 )
+from .notification import (
+    Notification,
+    NotificationPreference,
+    NotificationType,
+    NotificationChannel,
+    NotificationPriority,
+)
 
 __all__ = [
     "User",
@@ -65,4 +72,9 @@ __all__ = [
     "EventVisibility",
     "RSVPStatus",
     "ReminderType",
+    "Notification",
+    "NotificationPreference",
+    "NotificationType",
+    "NotificationChannel",
+    "NotificationPriority",
 ]
