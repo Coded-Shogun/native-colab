@@ -1,0 +1,240 @@
+version: '3.9'
+
+services:
+  # ============================================
+  # PostgreSQL Database
+  # ============================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: nativecolab-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nativecolab}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nativecolab123}
+      POSTGRES_DB: ${POSTGRES_DB:-nativecolab}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "${POSTGRES_EXPOSED_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nativecolab}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nativecolab-network
+
+  # ============================================
+  # Redis Cache & Message Broker
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: nativecolab-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    volumes:
+      - redis-data:/data
+    ports:
+      - "${REDIS_EXPOSED_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nativecolab-network
+
+  # ============================================
+  # MinIO Object Storage (S3-compatible)
+  # ============================================
+  minio:
+    image: minio/minio:latest
+    container_name: nativecolab-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-minioadmin123}
+    volumes:
+      - minio-data:/data
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - nativecolab-network
+
+  # ============================================
+  # MinIO Client (for initial bucket creation)
+  # ============================================
+  minio-client:
+    image: minio/mc:latest
+    container_name: nativecolab-minio-client
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 10;
+      /usr/bin/mc config host add minio http://minio:9000 ${S3_ACCESS_KEY:-minioadmin} ${S3_SECRET_KEY:-minioadmin123};
+      /usr/bin/mc mb --ignore-existing minio/${S3_BUCKET:-nativecolab};
+      /usr/bin/mc anonymous set download minio/${S3_BUCKET:-nativecolab};
+      exit 0;
+      "
+    networks:
+      - nativecolab-network
+
+  # ============================================
+  # FastAPI Backend
+  # ============================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nativecolab-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-nativecolab}:${POSTGRES_PASSWORD:-nativecolab123}@postgres:5432/${POSTGRES_DB:-nativecolab}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-}@redis:6379/0
+      S3_ENDPOINT: http://minio:9000
+    volumes:
+      - ./backend:/app
+      - backend-uploads:/app/uploads
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - nativecolab-network
+
+  # ============================================
+  # Celery Worker (Background Tasks)
+  # ============================================
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nativecolab-celery-worker
+    restart: unless-stopped
+    command: celery -A app.tasks.celery_app worker --loglevel=info
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-nativecolab}:${POSTGRES_PASSWORD:-nativecolab123}@postgres:5432/${POSTGRES_DB:-nativecolab}
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-}@redis:6379/1
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-}@redis:6379/1
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - postgres
+      - redis
+      - backend
+    networks:
+      - nativecolab-network
+
+  # ============================================
+  # Celery Beat (Scheduled Tasks)
+  # ============================================
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nativecolab-celery-beat
+    restart: unless-stopped
+    command: celery -A app.tasks.celery_app beat --loglevel=info
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-nativecolab}:${POSTGRES_PASSWORD:-nativecolab123}@postgres:5432/${POSTGRES_DB:-nativecolab}
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-}@redis:6379/1
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-}@redis:6379/1
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - postgres
+      - redis
+      - backend
+    networks:
+      - nativecolab-network
+
+  # ============================================
+  # React + Vite Frontend
+  # ============================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nativecolab-frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: ${API_URL:-http://localhost:8000}
+      VITE_SOCKET_URL: ${API_URL:-http://localhost:8000}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      - backend
+    networks:
+      - nativecolab-network
+
+  # ============================================
+  # Nginx Reverse Proxy
+  # ============================================
+  nginx:
+    image: nginx:alpine
+    container_name: nativecolab-nginx
+    restart: unless-stopped
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - nginx-logs:/var/log/nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - nativecolab-network
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  minio-data:
+    driver: local
+  backend-uploads:
+    driver: local
+  nginx-logs:
+    driver: local
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  nativecolab-network:
+    driver: bridge
