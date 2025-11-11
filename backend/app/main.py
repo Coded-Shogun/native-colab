@@ -67,6 +67,17 @@ app.add_middleware(
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # ============================================
+# Socket.io Integration
+# ============================================
+
+from app.realtime import socket_app
+
+# Mount Socket.io ASGI app
+app.mount("/ws", socket_app)
+
+logger.info("Socket.io mounted at /ws")
+
+# ============================================
 # Root Endpoints
 # ============================================
 

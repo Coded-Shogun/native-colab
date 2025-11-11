@@ -33,6 +33,13 @@ from app.schemas.chat import (
     DirectConversationListResponse,
 )
 from app.core.deps import get_current_user
+from app.realtime import (
+    broadcast_message,
+    broadcast_message_update,
+    broadcast_message_delete,
+    broadcast_reaction,
+    send_direct_message,
+)
 
 router = APIRouter()
 
@@ -178,7 +185,13 @@ async def create_message(
     await db.commit()
     await db.refresh(new_message)
 
-    return await build_message_response(new_message, db)
+    # Build response
+    message_response = await build_message_response(new_message, db)
+
+    # Broadcast message to channel in real-time
+    await broadcast_message(message_data.channel_id, message_response.model_dump())
+
+    return message_response
 
 
 @router.get("/channel/{channel_id}", response_model=MessageListResponse)
@@ -321,7 +334,13 @@ async def update_message(
     await db.commit()
     await db.refresh(message)
 
-    return await build_message_response(message, db)
+    # Build response
+    message_response = await build_message_response(message, db)
+
+    # Broadcast update to channel in real-time
+    await broadcast_message_update(message.channel_id, message_response.model_dump())
+
+    return message_response
 
 
 @router.delete("/{message_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -351,11 +370,17 @@ async def delete_message(
             detail="You can only delete your own messages"
         )
 
+    # Store channel_id before deletion
+    channel_id = message.channel_id
+
     # Soft delete
     message.is_deleted = True
     message.content = "[deleted]"
 
     await db.commit()
+
+    # Broadcast deletion to channel in real-time
+    await broadcast_message_delete(channel_id, message_id)
 
 
 # ============================================
@@ -416,7 +441,8 @@ async def add_reaction(
     result = await db.execute(stmt)
     new_reaction = result.scalar_one()
 
-    return MessageReactionResponse(
+    # Build response
+    reaction_response = MessageReactionResponse(
         id=new_reaction.id,
         message_id=new_reaction.message_id,
         user_id=new_reaction.user_id,
@@ -425,6 +451,14 @@ async def add_reaction(
         user_email=new_reaction.user.email if new_reaction.user else None,
         user_name=new_reaction.user.full_name if new_reaction.user else None,
     )
+
+    # Broadcast reaction to channel in real-time
+    await broadcast_reaction(message.channel_id, {
+        'action': 'add',
+        'reaction': reaction_response.model_dump()
+    })
+
+    return reaction_response
 
 
 @router.delete("/{message_id}/reactions/{emoji}", status_code=status.HTTP_204_NO_CONTENT)
@@ -516,7 +550,8 @@ async def send_direct_message(
     result = await db.execute(stmt)
     new_dm = result.scalar_one()
 
-    return DirectMessageResponse(
+    # Build response
+    dm_response = DirectMessageResponse(
         id=new_dm.id,
         sender_id=new_dm.sender_id,
         recipient_id=new_dm.recipient_id,
@@ -533,6 +568,11 @@ async def send_direct_message(
         recipient_name=new_dm.recipient.full_name if new_dm.recipient else None,
         recipient_avatar=new_dm.recipient.avatar_url if new_dm.recipient else None,
     )
+
+    # Send direct message to recipient in real-time
+    await send_direct_message(dm_data.recipient_id, dm_response.model_dump())
+
+    return dm_response
 
 
 @router.get("/direct/conversations", response_model=DirectConversationListResponse)
