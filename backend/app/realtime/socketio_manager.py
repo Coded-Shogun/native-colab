@@ -329,6 +329,255 @@ async def get_online_users(sid, data):
 
 
 # ============================================
+# Whiteboard Event Handlers
+# ============================================
+
+@sio.event
+async def join_whiteboard(sid, data):
+    """
+    Join a whiteboard room for real-time collaboration.
+    Data: { whiteboard_id: int }
+    """
+    user_id = connection_manager.get_user_id(sid)
+    if not user_id:
+        await sio.emit('error', {'message': 'Not authenticated'}, room=sid)
+        return
+
+    whiteboard_id = data.get('whiteboard_id')
+    if not whiteboard_id:
+        await sio.emit('error', {'message': 'whiteboard_id required'}, room=sid)
+        return
+
+    # TODO: Verify user has access to this whiteboard (check DB)
+    # For now, we'll allow joining
+
+    room_name = f"whiteboard_{whiteboard_id}"
+    await sio.enter_room(sid, room_name)
+
+    # Update participant status in database
+    from app.db.session import async_session_maker
+    from app.db.models.whiteboard import WhiteboardParticipant
+    from sqlalchemy import select, and_
+
+    async with async_session_maker() as db:
+        stmt = select(WhiteboardParticipant).where(
+            and_(
+                WhiteboardParticipant.whiteboard_id == whiteboard_id,
+                WhiteboardParticipant.user_id == user_id
+            )
+        )
+        result = await db.execute(stmt)
+        participant = result.scalar_one_or_none()
+
+        if participant:
+            participant.is_active = True
+            participant.last_seen_at = datetime.utcnow()
+            await db.commit()
+
+            # Notify other participants
+            await broadcast_participant_joined(whiteboard_id, user_id, skip_sid=sid)
+
+    logger.info(f"User {user_id} joined whiteboard {whiteboard_id}")
+
+    await sio.emit('whiteboard_joined', {
+        'whiteboard_id': whiteboard_id,
+        'timestamp': datetime.utcnow().isoformat()
+    }, room=sid)
+
+
+@sio.event
+async def leave_whiteboard(sid, data):
+    """
+    Leave a whiteboard room.
+    Data: { whiteboard_id: int }
+    """
+    user_id = connection_manager.get_user_id(sid)
+    if not user_id:
+        return
+
+    whiteboard_id = data.get('whiteboard_id')
+    if not whiteboard_id:
+        return
+
+    room_name = f"whiteboard_{whiteboard_id}"
+    await sio.leave_room(sid, room_name)
+
+    # Update participant status in database
+    from app.db.session import async_session_maker
+    from app.db.models.whiteboard import WhiteboardParticipant
+    from sqlalchemy import select, and_
+
+    async with async_session_maker() as db:
+        stmt = select(WhiteboardParticipant).where(
+            and_(
+                WhiteboardParticipant.whiteboard_id == whiteboard_id,
+                WhiteboardParticipant.user_id == user_id
+            )
+        )
+        result = await db.execute(stmt)
+        participant = result.scalar_one_or_none()
+
+        if participant:
+            participant.is_active = False
+            participant.last_seen_at = datetime.utcnow()
+            participant.cursor_x = None
+            participant.cursor_y = None
+            participant.selected_element_id = None
+            await db.commit()
+
+            # Notify other participants
+            await broadcast_participant_left(whiteboard_id, user_id)
+
+    logger.info(f"User {user_id} left whiteboard {whiteboard_id}")
+
+
+@sio.event
+async def drawing_event(sid, data):
+    """
+    Handle drawing events (create/update/delete/move elements).
+    Data: {
+        whiteboard_id: int,
+        action: str,  # "create", "update", "delete", "move"
+        element: dict (optional),
+        element_id: str (optional),
+        updates: dict (optional)
+    }
+    """
+    user_id = connection_manager.get_user_id(sid)
+    if not user_id:
+        return
+
+    whiteboard_id = data.get('whiteboard_id')
+    if not whiteboard_id:
+        return
+
+    action = data.get('action')
+    if not action:
+        return
+
+    # Update whiteboard last_activity_at
+    from app.db.session import async_session_maker
+    from app.db.models.whiteboard import Whiteboard
+
+    async with async_session_maker() as db:
+        stmt = select(Whiteboard).where(Whiteboard.id == whiteboard_id)
+        result = await db.execute(stmt)
+        whiteboard = result.scalar_one_or_none()
+
+        if whiteboard:
+            whiteboard.last_activity_at = datetime.utcnow()
+            await db.commit()
+
+    # Broadcast drawing event to all participants except sender
+    await broadcast_drawing_event(whiteboard_id, {
+        'action': action,
+        'element': data.get('element'),
+        'element_id': data.get('element_id'),
+        'updates': data.get('updates'),
+        'user_id': user_id,
+        'timestamp': datetime.utcnow().isoformat()
+    }, skip_sid=sid)
+
+    logger.info(f"User {user_id} performed {action} on whiteboard {whiteboard_id}")
+
+
+@sio.event
+async def cursor_move(sid, data):
+    """
+    Broadcast cursor position to other participants.
+    Data: {
+        whiteboard_id: int,
+        x: float,
+        y: float
+    }
+    """
+    user_id = connection_manager.get_user_id(sid)
+    if not user_id:
+        return
+
+    whiteboard_id = data.get('whiteboard_id')
+    cursor_x = data.get('x')
+    cursor_y = data.get('y')
+
+    if whiteboard_id is None or cursor_x is None or cursor_y is None:
+        return
+
+    # Update participant cursor position in database (async, no await to avoid blocking)
+    from app.db.session import async_session_maker
+    from app.db.models.whiteboard import WhiteboardParticipant
+    from sqlalchemy import select, and_
+
+    async def update_cursor():
+        async with async_session_maker() as db:
+            stmt = select(WhiteboardParticipant).where(
+                and_(
+                    WhiteboardParticipant.whiteboard_id == whiteboard_id,
+                    WhiteboardParticipant.user_id == user_id
+                )
+            )
+            result = await db.execute(stmt)
+            participant = result.scalar_one_or_none()
+
+            if participant:
+                participant.cursor_x = cursor_x
+                participant.cursor_y = cursor_y
+                participant.last_seen_at = datetime.utcnow()
+                await db.commit()
+
+    # Fire and forget
+    import asyncio
+    asyncio.create_task(update_cursor())
+
+    # Broadcast cursor position to other participants
+    await broadcast_cursor_position(whiteboard_id, user_id, cursor_x, cursor_y, skip_sid=sid)
+
+
+@sio.event
+async def element_select(sid, data):
+    """
+    Broadcast element selection to other participants.
+    Data: {
+        whiteboard_id: int,
+        element_id: str (optional - null to deselect)
+    }
+    """
+    user_id = connection_manager.get_user_id(sid)
+    if not user_id:
+        return
+
+    whiteboard_id = data.get('whiteboard_id')
+    element_id = data.get('element_id')
+
+    if whiteboard_id is None:
+        return
+
+    # Update participant selected element in database
+    from app.db.session import async_session_maker
+    from app.db.models.whiteboard import WhiteboardParticipant
+    from sqlalchemy import select, and_
+
+    async with async_session_maker() as db:
+        stmt = select(WhiteboardParticipant).where(
+            and_(
+                WhiteboardParticipant.whiteboard_id == whiteboard_id,
+                WhiteboardParticipant.user_id == user_id
+            )
+        )
+        result = await db.execute(stmt)
+        participant = result.scalar_one_or_none()
+
+        if participant:
+            participant.selected_element_id = element_id
+            participant.last_seen_at = datetime.utcnow()
+            await db.commit()
+
+    # Broadcast element selection to other participants
+    await broadcast_element_selection(whiteboard_id, user_id, element_id, skip_sid=sid)
+
+    logger.info(f"User {user_id} selected element {element_id} on whiteboard {whiteboard_id}")
+
+
+# ============================================
 # Broadcast Helper Functions
 # ============================================
 
@@ -420,3 +669,69 @@ async def broadcast_to_user(user_id: int, event: str, data: dict):
     sids = connection_manager.get_user_sids(user_id)
     for sid in sids:
         await sio.emit(event, data, room=sid)
+
+
+# ============================================
+# Whiteboard Broadcast Helper Functions
+# ============================================
+
+async def broadcast_participant_joined(whiteboard_id: int, user_id: int, skip_sid: str = None):
+    """
+    Broadcast participant joined event to all participants in whiteboard.
+    """
+    room_name = f"whiteboard_{whiteboard_id}"
+    await sio.emit('participant_joined', {
+        'whiteboard_id': whiteboard_id,
+        'user_id': user_id,
+        'timestamp': datetime.utcnow().isoformat()
+    }, room=room_name, skip_sid=skip_sid)
+    logger.info(f"Broadcasted participant_joined for user {user_id} in whiteboard {whiteboard_id}")
+
+
+async def broadcast_participant_left(whiteboard_id: int, user_id: int):
+    """
+    Broadcast participant left event to all participants in whiteboard.
+    """
+    room_name = f"whiteboard_{whiteboard_id}"
+    await sio.emit('participant_left', {
+        'whiteboard_id': whiteboard_id,
+        'user_id': user_id,
+        'timestamp': datetime.utcnow().isoformat()
+    }, room=room_name)
+    logger.info(f"Broadcasted participant_left for user {user_id} in whiteboard {whiteboard_id}")
+
+
+async def broadcast_drawing_event(whiteboard_id: int, event_data: dict, skip_sid: str = None):
+    """
+    Broadcast drawing event (create/update/delete/move) to all participants.
+    """
+    room_name = f"whiteboard_{whiteboard_id}"
+    await sio.emit('drawing_update', event_data, room=room_name, skip_sid=skip_sid)
+    logger.info(f"Broadcasted drawing_update to whiteboard {whiteboard_id}")
+
+
+async def broadcast_cursor_position(whiteboard_id: int, user_id: int, cursor_x: float, cursor_y: float, skip_sid: str = None):
+    """
+    Broadcast cursor position to all participants except sender.
+    """
+    room_name = f"whiteboard_{whiteboard_id}"
+    await sio.emit('cursor_update', {
+        'whiteboard_id': whiteboard_id,
+        'user_id': user_id,
+        'x': cursor_x,
+        'y': cursor_y,
+        'timestamp': datetime.utcnow().isoformat()
+    }, room=room_name, skip_sid=skip_sid)
+
+
+async def broadcast_element_selection(whiteboard_id: int, user_id: int, element_id: str, skip_sid: str = None):
+    """
+    Broadcast element selection to all participants except sender.
+    """
+    room_name = f"whiteboard_{whiteboard_id}"
+    await sio.emit('element_selected', {
+        'whiteboard_id': whiteboard_id,
+        'user_id': user_id,
+        'element_id': element_id,
+        'timestamp': datetime.utcnow().isoformat()
+    }, room=room_name, skip_sid=skip_sid)
