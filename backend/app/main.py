@@ -109,13 +109,15 @@ async def metrics():
 # API Routes
 # ============================================
 
-from app.api.v1 import auth, users, workspaces, teams
+from app.api.v1 import auth, users, workspaces, teams, projects, tasks
 
 # Include routers
 app.include_router(auth.router, prefix=f"{settings.API_V1_PREFIX}/auth", tags=["Authentication"])
 app.include_router(users.router, prefix=f"{settings.API_V1_PREFIX}/users", tags=["Users"])
 app.include_router(workspaces.router, prefix=f"{settings.API_V1_PREFIX}/workspaces", tags=["Workspaces"])
 app.include_router(teams.router, prefix=f"{settings.API_V1_PREFIX}/teams", tags=["Teams"])
+app.include_router(projects.router, prefix=f"{settings.API_V1_PREFIX}/projects", tags=["Projects"])
+app.include_router(tasks.router, prefix=f"{settings.API_V1_PREFIX}/tasks", tags=["Tasks"])
 
 # TODO: Include remaining API routers
 # from app.api.v1 import chat, projects, documents, etc.
