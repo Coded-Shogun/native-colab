@@ -177,6 +177,50 @@ const sidebars: SidebarsConfig = {
       ],
     },
   ],
+
+  enterpriseSidebar: [
+    'enterprise/overview',
+    'product-features',
+    {
+      type: 'category',
+      label: 'Security',
+      items: [
+        'enterprise/security',
+        'enterprise/authentication',
+        'enterprise/authorization',
+        'enterprise/data-protection',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Compliance',
+      items: [
+        'enterprise/compliance',
+        'enterprise/audit-logging',
+        'enterprise/gdpr',
+        'enterprise/soc2',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Infrastructure',
+      items: [
+        'enterprise/high-availability',
+        'enterprise/scaling',
+        'enterprise/monitoring',
+        'enterprise/disaster-recovery',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Support',
+      items: [
+        'enterprise/support-plans',
+        'enterprise/sla',
+        'enterprise/training',
+      ],
+    },
+  ],
 };
 
 export default sidebars;

@@ -86,6 +86,12 @@ const config: Config = {
           label: 'API Reference',
         },
         {
+          type: 'docSidebar',
+          sidebarId: 'enterpriseSidebar',
+          position: 'left',
+          label: 'Enterprise Edition',
+        },
+        {
           href: 'https://github.com/yourusername/native-colab',
           label: 'GitHub',
           position: 'right',
@@ -109,6 +115,10 @@ const config: Config = {
             {
               label: 'API Reference',
               to: '/docs/api/overview',
+            },
+            {
+              label: 'Enterprise Edition',
+              to: '/docs/enterprise/overview',
             },
           ],
         },
