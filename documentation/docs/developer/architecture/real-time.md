@@ -1,0 +1,3 @@
+# Real-Time Architecture
+
+Documentation for WebSocket and real-time features coming soon...
