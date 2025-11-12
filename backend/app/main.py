@@ -9,8 +9,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 import logging
+import redis.asyncio as redis
 
 from app.core.config import settings
+from app.core.token_blacklist import TokenBlacklist, init_token_blacklist
 
 # Configure logging
 logging.basicConfig(
@@ -29,6 +31,15 @@ async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.APP_NAME} ({settings.APP_ENV})")
     logger.info(f"Debug mode: {settings.DEBUG}")
 
+    # Initialize Redis client for token blacklisting and rate limiting
+    redis_url = getattr(settings, 'REDIS_URL', 'redis://redis:6379/0')
+    redis_client = redis.from_url(redis_url, encoding="utf-8", decode_responses=True)
+
+    # Initialize token blacklist
+    token_blacklist = TokenBlacklist(redis_client)
+    init_token_blacklist(token_blacklist)
+    logger.info("Token blacklist initialized")
+
     # Initialize database tables (in development)
     if settings.DEBUG:
         logger.info("Database tables will be created by Alembic migrations")
@@ -36,6 +47,8 @@ async def lifespan(app: FastAPI):
     yield
 
     # Shutdown
+    logger.info("Closing Redis connection")
+    await redis_client.close()
     logger.info(f"Shutting down {settings.APP_NAME}")
 
 
@@ -53,6 +66,17 @@ app = FastAPI(
 # ============================================
 # Middleware Configuration
 # ============================================
+
+# Enterprise Audit Logging Middleware (First - logs all requests)
+from app.middleware.audit import AuditLoggingMiddleware
+app.add_middleware(AuditLoggingMiddleware)
+logger.info("Audit logging middleware enabled")
+
+# Enterprise Rate Limiting Middleware
+from app.middleware.rate_limit import RateLimitMiddleware
+redis_url = getattr(settings, 'REDIS_URL', 'redis://redis:6379/0')
+app.add_middleware(RateLimitMiddleware, redis_url=redis_url)
+logger.info("Rate limiting middleware enabled")
 
 # CORS Middleware
 app.add_middleware(
@@ -104,23 +128,30 @@ async def health_check():
 
 
 @app.get("/metrics")
-async def metrics():
+async def metrics_endpoint():
     """Prometheus metrics endpoint"""
-    if not settings.PROMETHEUS_ENABLED:
+    prometheus_enabled = getattr(settings, 'PROMETHEUS_ENABLED', True)
+    if not prometheus_enabled:
         return JSONResponse(
             status_code=404,
             content={"detail": "Metrics endpoint is disabled"}
         )
 
-    # TODO: Implement Prometheus metrics
-    return {"message": "Metrics endpoint - Coming soon"}
+    # Import here to avoid circular imports
+    from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+    from fastapi import Response
+
+    return Response(
+        content=generate_latest(),
+        media_type=CONTENT_TYPE_LATEST
+    )
 
 
 # ============================================
 # API Routes
 # ============================================
 
-from app.api.v1 import auth, users, workspaces, teams, projects, tasks, time_entries, channels, messages, calendars, events, notifications, folders, documents, signatures, signing, whiteboards, meetings, search, webhooks, integrations
+from app.api.v1 import auth, users, workspaces, teams, projects, tasks, time_entries, channels, messages, calendars, events, notifications, folders, documents, signatures, signing, whiteboards, meetings, search, webhooks, integrations, gdpr, metrics
 
 # Include routers
 app.include_router(auth.router, prefix=f"{settings.API_V1_PREFIX}/auth", tags=["Authentication"])
@@ -144,6 +175,11 @@ app.include_router(meetings.router, prefix=f"{settings.API_V1_PREFIX}/meetings",
 app.include_router(search.router, prefix=f"{settings.API_V1_PREFIX}/search", tags=["Search"])
 app.include_router(webhooks.router, prefix=f"{settings.API_V1_PREFIX}/webhooks", tags=["Webhooks"])
 app.include_router(integrations.router, prefix=f"{settings.API_V1_PREFIX}/integrations", tags=["Integrations"])
+
+# Enterprise Features
+app.include_router(gdpr.router, prefix=f"{settings.API_V1_PREFIX}/gdpr", tags=["Enterprise - GDPR Compliance"])
+app.include_router(metrics.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Enterprise - Metrics"])
+logger.info("Enterprise GDPR and metrics endpoints enabled")
 
 # TODO: Include remaining API routers
 # from app.api.v1 import chat, projects, documents, etc.
