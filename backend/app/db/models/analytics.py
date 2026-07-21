@@ -21,7 +21,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base
+from app.db.session import Base
 
 
 # ============================================
@@ -129,6 +129,9 @@ class AnalyticsEvent(Base):
         nullable=True,
         index=True
     )
+    organization_id: Mapped[Optional[str]] = mapped_column(
+        String(36), nullable=True, index=True
+    )
 
     # Event data
     properties: Mapped[Optional[dict]] = mapped_column(
@@ -204,6 +207,9 @@ class Report(Base):
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True
+    )
+    organization_id: Mapped[Optional[str]] = mapped_column(
+        String(36), nullable=True, index=True
     )
 
     # Report details
@@ -331,6 +337,9 @@ class ExportJob(Base):
         nullable=False,
         index=True
     )
+    organization_id: Mapped[Optional[str]] = mapped_column(
+        String(36), nullable=True, index=True
+    )
 
     # Export details
     export_type: Mapped[str] = mapped_column(
@@ -433,6 +442,9 @@ class WorkspaceMetrics(Base):
         ForeignKey("workspaces.id", ondelete="CASCADE"),
         nullable=False,
         index=True
+    )
+    organization_id: Mapped[Optional[str]] = mapped_column(
+        String(36), nullable=True, index=True
     )
 
     # Date of metrics

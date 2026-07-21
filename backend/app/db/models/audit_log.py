@@ -7,7 +7,7 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, Text, JSON, Index, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 
-from app.db.base_class import Base
+from app.db.session import Base
 
 
 class AuditLog(Base):
@@ -22,6 +22,7 @@ class AuditLog(Base):
     # Context
     workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    organization_id = Column(String(36), nullable=True, index=True)
 
     # Action details
     action = Column(String(100), nullable=False, index=True)  # create, read, update, delete, login, logout
@@ -45,7 +46,7 @@ class AuditLog(Base):
     risk_level = Column(String(20), default="low")  # low, medium, high, critical
 
     # Additional metadata
-    metadata = Column(JSON, nullable=True)  # Any additional context
+    extra_data = Column("metadata", JSON, nullable=True)  # Any additional context
     duration_ms = Column(Integer, nullable=True)  # How long the operation took
 
     # Timestamp
@@ -85,6 +86,7 @@ class SecurityEvent(Base):
     # Context
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=True, index=True)
+    organization_id = Column(String(36), nullable=True, index=True)
 
     # Severity
     severity = Column(String(20), nullable=False, default="medium", index=True)  # low, medium, high, critical
@@ -102,7 +104,7 @@ class SecurityEvent(Base):
     resolved_by = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     # Metadata
-    metadata = Column(JSON, nullable=True)
+    extra_data = Column("metadata", JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
 
     # Relationships
@@ -131,6 +133,7 @@ class DataAccessLog(Base):
     # Who accessed
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=True, index=True)
+    organization_id = Column(String(36), nullable=True, index=True)
 
     # What was accessed
     resource_type = Column(String(100), nullable=False, index=True)  # document, message, user_profile, etc.
@@ -146,7 +149,7 @@ class DataAccessLog(Base):
     purpose = Column(String(500), nullable=True)  # Why was it accessed?
 
     # Metadata
-    metadata = Column(JSON, nullable=True)
+    extra_data = Column("metadata", JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
 
     # Relationships
@@ -180,6 +183,7 @@ class ComplianceLog(Base):
     # Context
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=True, index=True)
+    organization_id = Column(String(36), nullable=True, index=True)
 
     # Details
     description = Column(Text, nullable=False)
@@ -200,7 +204,7 @@ class ComplianceLog(Base):
     expiry_date = Column(DateTime, nullable=True)  # For exports that expire
 
     # Metadata
-    metadata = Column(JSON, nullable=True)
+    extra_data = Column("metadata", JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
 
     # Relationships

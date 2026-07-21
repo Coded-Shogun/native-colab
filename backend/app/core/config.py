@@ -52,6 +52,8 @@ class Settings(BaseSettings):
     PASSWORD_REQUIRE_SPECIAL: bool = True
 
     # Database
+    # In production this should point to your Supabase Postgres instance, e.g.
+    # DATABASE_URL=postgresql+asyncpg://postgres:<password>@<host>:5432/postgres
     DATABASE_URL: str
     DB_POOL_SIZE: int = 20
     DB_MAX_OVERFLOW: int = 10
@@ -114,6 +116,11 @@ class Settings(BaseSettings):
     VAPID_PUBLIC_KEY: Optional[str] = None
     VAPID_PRIVATE_KEY: Optional[str] = None
 
+    # Supabase
+    SUPABASE_URL: str = ""
+    SUPABASE_JWT_SECRET: str = ""
+    SUPABASE_ANON_KEY: str = ""
+
     # OAuth2
     GOOGLE_CLIENT_ID: Optional[str] = None
     GOOGLE_CLIENT_SECRET: Optional[str] = None
@@ -155,6 +162,9 @@ class Settings(BaseSettings):
     SESSION_COOKIE_SECURE: bool = False
     SESSION_COOKIE_HTTPONLY: bool = True
     SESSION_COOKIE_SAMESITE: str = "lax"
+
+    # Organization Defaults
+    ORGANIZATION_DEFAULT_ROLE: str = "member"
 
     # Workspace Defaults
     DEFAULT_WORKSPACE_NAME: str = "My Workspace"

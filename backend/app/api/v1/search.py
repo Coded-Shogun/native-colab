@@ -8,7 +8,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 import time
 
-from app.core.auth import get_current_user
+from app.core.deps import get_current_user
+from app.core.organization_context import get_organization_context, OrganizationContext
 from app.db.session import get_db
 from app.db.models import User, ContentType
 from app.services.search_service import SearchService
@@ -35,7 +36,7 @@ from app.schemas.search import (
 )
 
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_organization_context)])
 
 
 # ============================================

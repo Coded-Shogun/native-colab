@@ -172,7 +172,7 @@ class NotificationService:
             email_sent = False
 
             if notification.notification_type == NotificationType.EVENT_REMINDER:
-                metadata = notification.metadata or {}
+                metadata = notification.extra_data or {}
                 email_sent = await email_service.send_event_reminder(
                     recipient_email=user.email,
                     recipient_name=user.full_name or user.email,
@@ -183,7 +183,7 @@ class NotificationService:
                 )
 
             elif notification.notification_type == NotificationType.EVENT_INVITATION:
-                metadata = notification.metadata or {}
+                metadata = notification.extra_data or {}
                 email_sent = await email_service.send_event_invitation(
                     recipient_email=user.email,
                     recipient_name=user.full_name or user.email,
@@ -197,7 +197,7 @@ class NotificationService:
                 )
 
             elif notification.notification_type == NotificationType.TASK_ASSIGNED:
-                metadata = notification.metadata or {}
+                metadata = notification.extra_data or {}
                 email_sent = await email_service.send_task_assignment(
                     recipient_email=user.email,
                     recipient_name=user.full_name or user.email,
@@ -209,7 +209,7 @@ class NotificationService:
                 )
 
             elif notification.notification_type == NotificationType.DIRECT_MESSAGE:
-                metadata = notification.metadata or {}
+                metadata = notification.extra_data or {}
                 email_sent = await email_service.send_direct_message_notification(
                     recipient_email=user.email,
                     recipient_name=user.full_name or user.email,
@@ -219,7 +219,7 @@ class NotificationService:
                 )
 
             elif notification.notification_type == NotificationType.CHANNEL_MENTION:
-                metadata = notification.metadata or {}
+                metadata = notification.extra_data or {}
                 email_sent = await email_service.send_mention_notification(
                     recipient_email=user.email,
                     recipient_name=user.full_name or user.email,
@@ -230,7 +230,7 @@ class NotificationService:
                 )
 
             elif notification.notification_type == NotificationType.WORKSPACE_INVITATION:
-                metadata = notification.metadata or {}
+                metadata = notification.extra_data or {}
                 email_sent = await email_service.send_workspace_invitation(
                     recipient_email=user.email,
                     recipient_name=user.full_name or user.email,

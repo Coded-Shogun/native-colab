@@ -7,7 +7,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth import get_current_user
+from app.core.deps import get_current_user
+from app.core.organization_context import get_organization_context, OrganizationContext
 from app.db.session import get_db
 from app.db.models import User, DeliveryStatus, WebhookStatus
 from app.services.webhook_service import WebhookService
@@ -25,7 +26,7 @@ from app.schemas.webhook import (
 )
 
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_organization_context)])
 
 
 # ============================================

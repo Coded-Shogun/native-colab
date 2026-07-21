@@ -19,6 +19,8 @@ from app.db.models import (
     Document,
     DocumentVersion,
 )
+from app.core.organization_context import get_organization_context, OrganizationContext
+
 from app.schemas.document import (
     DocumentResponse,
     DocumentListResponse,

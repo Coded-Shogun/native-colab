@@ -31,8 +31,9 @@ from app.schemas.time_entry import (
     TimeEntryFilters,
 )
 from app.core.deps import get_current_user
+from app.core.organization_context import get_organization_context, OrganizationContext
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_organization_context)])
 
 
 # ============================================

@@ -82,7 +82,7 @@ class Notification(Base):
     workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=True)
 
     # Metadata
-    metadata = Column(JSON, nullable=True)  # Additional context data
+    extra_data = Column("metadata", JSON, nullable=True)  # Additional context data
 
     # Delivery tracking
     is_read = Column(Boolean, default=False, nullable=False)

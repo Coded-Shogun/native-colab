@@ -120,6 +120,9 @@ class ConsentsResponse(BaseModel):
         }
 
 
+ConsentResponse = ConsentsResponse
+
+
 class DataAccessLogEntry(BaseModel):
     """Single data access log entry"""
     accessed_at: datetime = Field(..., description="When data was accessed")

@@ -79,7 +79,7 @@ export const WithHeader: Story = {
         <CardTitle>Project Overview</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-slate-600 dark:text-slate-400">
+        <p className="text-muted-foreground">
           This is the main content of the card. It can contain any type of information.
         </p>
       </CardContent>
@@ -94,7 +94,7 @@ export const WithFooter: Story = {
         <CardTitle>Confirm Action</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-slate-600 dark:text-slate-400">
+        <p className="text-muted-foreground">
           Are you sure you want to proceed with this action?
         </p>
       </CardContent>
@@ -115,7 +115,7 @@ export const Complete: Story = {
         <CardTitle>Complete Card Example</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-slate-600 dark:text-slate-400">
+        <p className="text-muted-foreground">
           This card has all components: header, title, content, and footer.
         </p>
       </CardContent>
@@ -136,20 +136,20 @@ export const ProjectCard: Story = {
         <div className="flex items-start justify-between">
           <div>
             <CardTitle>Q4 Marketing Campaign</CardTitle>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Due: Dec 31, 2025
             </p>
           </div>
-          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-success/10 text-success">
             Active
           </span>
         </div>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+        <p className="text-sm text-muted-foreground mb-4">
           Launch new marketing campaign targeting enterprise customers with focus on digital channels.
         </p>
-        <div className="flex items-center gap-4 text-sm text-slate-500">
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <Users className="w-4 h-4" />
             <span>5 members</span>
@@ -181,15 +181,15 @@ export const EventCard: Story = {
     <Card hover className="w-80">
       <CardContent>
         <div className="flex gap-4">
-          <div className="flex flex-col items-center justify-center bg-blue-100 dark:bg-blue-900 rounded-lg p-3 w-16 h-16">
-            <Calendar className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          <div className="flex flex-col items-center justify-center bg-primary/10 rounded-lg p-3 w-16 h-16">
+            <Calendar className="w-6 h-6 text-primary" />
           </div>
           <div className="flex-1">
             <CardTitle>Team Standup</CardTitle>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Today at 10:00 AM
             </p>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
+            <p className="text-sm text-muted-foreground mt-2">
               Daily sync with the development team
             </p>
           </div>
@@ -216,12 +216,12 @@ export const UserCard: Story = {
     <Card className="w-64">
       <CardContent>
         <div className="flex flex-col items-center text-center">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 mb-3" />
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-secondary mb-3" />
           <CardTitle>John Doe</CardTitle>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Product Manager
           </p>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+          <p className="text-xs text-muted-foreground mt-2">
             john.doe@example.com
           </p>
         </div>
@@ -251,13 +251,13 @@ export const StatsCard: Story = {
   render: () => (
     <Card className="w-64">
       <CardContent>
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+        <p className="text-sm font-medium text-muted-foreground">
           Total Projects
         </p>
-        <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">
+        <p className="text-3xl font-bold text-foreground mt-2">
           127
         </p>
-        <p className="text-sm text-green-600 dark:text-green-400 mt-2">
+        <p className="text-sm text-success mt-2">
           ↑ 12% from last month
         </p>
       </CardContent>
@@ -277,20 +277,20 @@ export const CardGrid: Story = {
     <div className="grid grid-cols-3 gap-4 p-4">
       <Card>
         <CardContent>
-          <p className="text-sm font-medium text-slate-500">Active Tasks</p>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">24</p>
+          <p className="text-sm font-medium text-muted-foreground">Active Tasks</p>
+          <p className="text-2xl font-bold text-foreground mt-1">24</p>
         </CardContent>
       </Card>
       <Card>
         <CardContent>
-          <p className="text-sm font-medium text-slate-500">Completed</p>
-          <p className="text-2xl font-bold text-green-600 mt-1">156</p>
+          <p className="text-sm font-medium text-muted-foreground">Completed</p>
+          <p className="text-2xl font-bold text-success mt-1">156</p>
         </CardContent>
       </Card>
       <Card>
         <CardContent>
-          <p className="text-sm font-medium text-slate-500">Team Members</p>
-          <p className="text-2xl font-bold text-blue-600 mt-1">8</p>
+          <p className="text-sm font-medium text-muted-foreground">Team Members</p>
+          <p className="text-2xl font-bold text-primary mt-1">8</p>
         </CardContent>
       </Card>
     </div>

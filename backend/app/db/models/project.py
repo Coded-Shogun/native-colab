@@ -48,6 +48,7 @@ class Project(Base):
     workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=False)
     team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    organization_id = Column(String(36), nullable=True, index=True)
 
     # Basic Info
     name = Column(String(255), nullable=False)

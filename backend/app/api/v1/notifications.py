@@ -29,9 +29,10 @@ from app.schemas.notification import (
     NotificationStats,
 )
 from app.core.deps import get_current_user
+from app.core.organization_context import get_organization_context, OrganizationContext
 from app.services.notification_service import notification_service
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_organization_context)])
 
 
 # ============================================

@@ -7,14 +7,13 @@ from typing import Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from app.db.session import get_db
 from app.db.models import User
-from app.core.security import decode_token
+from app.core.supabase_auth import verify_supabase_token, get_or_create_user
 
 # OAuth2 scheme for token authentication
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 
 async def get_current_user(
@@ -22,10 +21,10 @@ async def get_current_user(
     db: AsyncSession = Depends(get_db)
 ) -> User:
     """
-    Get the current authenticated user from JWT token.
+    Get the current authenticated user from a Supabase JWT.
 
     Args:
-        token: JWT access token from request header
+        token: Supabase JWT access token from request header
         db: Database session
 
     Returns:
@@ -40,25 +39,19 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    # Decode token
-    payload = decode_token(token)
-    if payload is None:
+    try:
+        claims = verify_supabase_token(token)
+    except HTTPException:
         raise credentials_exception
 
-    user_id: Optional[str] = payload.get("sub")
-    token_type: Optional[str] = payload.get("type")
-
-    if user_id is None or token_type != "access":
+    if claims.get("role") != "authenticated":
         raise credentials_exception
 
-    # Get user from database
-    result = await db.execute(
-        select(User).where(User.id == int(user_id))
-    )
-    user = result.scalar_one_or_none()
-
-    if user is None:
+    supabase_id = claims.get("sub")
+    if not supabase_id:
         raise credentials_exception
+
+    user = await get_or_create_user(db, claims)
 
     if not user.is_active:
         raise HTTPException(

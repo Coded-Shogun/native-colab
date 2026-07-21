@@ -5,10 +5,14 @@ Provides reusable test fixtures for the entire test suite
 
 import os
 import asyncio
+from datetime import datetime, timedelta, timezone
 from typing import AsyncGenerator, Generator
+from unittest.mock import patch
+
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient
+from jose import jwt
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.pool import NullPool
 
@@ -20,6 +24,7 @@ load_dotenv(env_file, override=True)
 from app.main import app
 from app.db.session import Base, get_db
 from app.core.config import settings
+from app.db.models.user import User
 
 # Test database URL
 # Use in-memory SQLite for tests if DATABASE_URL is not set
@@ -34,6 +39,36 @@ else:
 
 
 # ============================================
+# Supabase Test Constants
+# ============================================
+TEST_SUPABASE_SECRET = "test-supabase-jwt-secret-conftest"
+TEST_SUPABASE_URL = "https://test-project.supabase.co"
+
+
+def _make_supabase_token(
+    sub: str,
+    email: str = "test@example.com",
+    role: str = "authenticated",
+    **extra,
+) -> str:
+    """Generate a Supabase-shaped JWT for testing."""
+    now = datetime.now(timezone.utc)
+    payload = {
+        "sub": sub,
+        "email": email,
+        "aud": "authenticated",
+        "role": role,
+        "iat": int(now.timestamp()),
+        "exp": int((now + timedelta(hours=1)).timestamp()),
+        "iss": f"{TEST_SUPABASE_URL}/auth/v1",
+        "app_metadata": {},
+        "user_metadata": {"full_name": "Test User"},
+    }
+    payload.update(extra)
+    return jwt.encode(payload, TEST_SUPABASE_SECRET, algorithm="HS256")
+
+
+# ============================================
 # Event Loop Fixture
 # ============================================
 @pytest.fixture(scope="session")
@@ -44,6 +79,16 @@ def event_loop() -> Generator:
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
+
+
+# ============================================
+# Autouse: Patch Supabase settings for every test
+# ============================================
+@pytest.fixture(autouse=True)
+def _patch_supabase_settings():
+    with patch.object(settings, "SUPABASE_JWT_SECRET", TEST_SUPABASE_SECRET), \
+         patch.object(settings, "SUPABASE_URL", TEST_SUPABASE_URL):
+        yield
 
 
 # ============================================
@@ -118,7 +163,6 @@ def test_user_data():
     """
     return {
         "email": "test@example.com",
-        "password": "SecurePass123!",
         "full_name": "Test User",
     }
 
@@ -130,42 +174,40 @@ def test_admin_data():
     """
     return {
         "email": "admin@example.com",
-        "password": "AdminPass123!",
         "full_name": "Admin User",
     }
 
 
 @pytest_asyncio.fixture
-async def test_user(client: AsyncClient, test_user_data):
+async def test_user(db_session: AsyncSession):
     """
-    Create a test user in the database.
+    Create a test user directly in the database.
     """
-    response = await client.post(
-        "/api/v1/auth/register",
-        json=test_user_data
+    supabase_id = "test-user-supabase-id"
+    user = User(
+        supabase_id=supabase_id,
+        email="test@example.com",
+        full_name="Test User",
+        hashed_password="!",
+        is_active=True,
     )
-    assert response.status_code == 201
-    return response.json()
+    db_session.add(user)
+    await db_session.flush()
+    return {
+        "id": user.id,
+        "email": user.email,
+        "full_name": user.full_name,
+        "is_active": user.is_active,
+        "supabase_id": supabase_id,
+    }
 
 
 @pytest_asyncio.fixture
-async def test_user_token(client: AsyncClient, test_user_data):
+async def test_user_token(test_user: dict) -> str:
     """
-    Get an access token for the test user.
+    Get a valid Supabase JWT for the test user.
     """
-    # Register user first
-    await client.post("/api/v1/auth/register", json=test_user_data)
-
-    # Login to get token
-    login_response = await client.post(
-        "/api/v1/auth/login",
-        data={
-            "username": test_user_data["email"],
-            "password": test_user_data["password"],
-        }
-    )
-    assert login_response.status_code == 200
-    return login_response.json()["access_token"]
+    return _make_supabase_token(sub=test_user["supabase_id"], email=test_user["email"])
 
 
 @pytest_asyncio.fixture

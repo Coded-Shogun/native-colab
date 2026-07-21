@@ -12,7 +12,7 @@ import logging
 import redis.asyncio as redis
 
 from app.core.config import settings
-from app.core.token_blacklist import TokenBlacklist, init_token_blacklist
+from app.core.token_blacklist import initialize_token_blacklist
 
 # Configure logging
 logging.basicConfig(
@@ -36,8 +36,7 @@ async def lifespan(app: FastAPI):
     redis_client = redis.from_url(redis_url, encoding="utf-8", decode_responses=True)
 
     # Initialize token blacklist
-    token_blacklist = TokenBlacklist(redis_client)
-    init_token_blacklist(token_blacklist)
+    await initialize_token_blacklist()
     logger.info("Token blacklist initialized")
 
     # Initialize database tables (in development)

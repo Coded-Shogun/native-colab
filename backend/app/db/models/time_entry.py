@@ -42,6 +42,7 @@ class TimeEntry(Base):
     workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=False)
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
     task_id = Column(Integer, ForeignKey("tasks.id"), nullable=True)
+    organization_id = Column(String(36), nullable=True, index=True)
 
     # Time Tracking
     description = Column(Text, nullable=True)

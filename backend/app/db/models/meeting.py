@@ -61,6 +61,7 @@ class Meeting(Base):
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
     event_id = Column(Integer, ForeignKey("events.id"), nullable=True)  # Link to calendar event
     whiteboard_id = Column(Integer, ForeignKey("whiteboards.id"), nullable=True)  # Optional integrated whiteboard
+    organization_id = Column(String(36), nullable=True, index=True)
 
     # Meeting details
     title = Column(String(255), nullable=False)

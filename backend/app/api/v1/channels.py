@@ -19,6 +19,8 @@ from app.db.models import (
     Workspace,
     WorkspaceMember,
 )
+from app.core.organization_context import get_organization_context, OrganizationContext
+
 from app.schemas.chat import (
     ChannelCreate,
     ChannelUpdate,

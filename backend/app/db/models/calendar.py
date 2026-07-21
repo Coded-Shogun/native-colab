@@ -70,6 +70,7 @@ class Calendar(Base):
     # Foreign Keys
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=True)
+    organization_id = Column(String(36), nullable=True, index=True)
 
     # Calendar Info
     name = Column(String(200), nullable=False)

@@ -154,7 +154,7 @@ class SearchService:
                 user_id=search_index.user_id,
                 user_name=enriched.get('user_name'),
                 user_avatar=enriched.get('user_avatar'),
-                metadata=search_index.metadata,
+                metadata=search_index.extra_data,
                 tags=search_index.tags,
                 is_public=search_index.is_public,
                 content_created_at=search_index.content_created_at,
@@ -573,7 +573,7 @@ class SearchService:
             existing.content = content
             existing.user_id = user_id
             existing.project_id = project_id
-            existing.metadata = metadata
+            existing.extra_data = metadata
             existing.tags = tags
             existing.is_public = is_public
             existing.content_updated_at = content_updated_at or datetime.utcnow()

@@ -43,6 +43,7 @@ class User(Base):
     # Authentication
     email = Column(String(255), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
+    supabase_id = Column(String(255), unique=True, index=True, nullable=True)
 
     # Profile
     full_name = Column(String(255), nullable=False)

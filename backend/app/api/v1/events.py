@@ -37,10 +37,11 @@ from app.schemas.calendar import (
     AvailabilityResponse,
 )
 from app.core.deps import get_current_user
+from app.core.organization_context import get_organization_context, OrganizationContext
 from app.services import notification_service
 from app.core.config import settings
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_organization_context)])
 
 
 # ============================================

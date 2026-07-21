@@ -28,10 +28,9 @@ export default function Card({
   return (
     <div
       className={`
-        bg-white dark:bg-slate-800
-        rounded-lg border border-slate-200 dark:border-slate-700
+        bg-card border-border rounded-md shadow-sm
         ${paddingClasses[padding]}
-        ${hover ? 'hover:shadow-md transition-shadow cursor-pointer' : ''}
+        ${hover ? 'hover:shadow-md transition-shadow duration-200 cursor-pointer' : ''}
         ${className}
       `}
       {...props}
@@ -60,7 +59,7 @@ export function CardTitle({
 }: HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h3
-      className={`text-lg font-semibold text-slate-900 dark:text-white ${className}`}
+      className={`text-lg font-semibold text-card-foreground ${className}`}
       {...props}
     >
       {children}

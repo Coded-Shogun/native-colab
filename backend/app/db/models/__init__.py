@@ -107,6 +107,8 @@ from .analytics import (
     ReportFormat,
     ExportStatus,
 )
+from .organization import Organization
+from .organization_member import OrganizationMember
 
 __all__ = [
     "User",
@@ -197,4 +199,6 @@ __all__ = [
     "ReportStatus",
     "ReportFormat",
     "ExportStatus",
+    "Organization",
+    "OrganizationMember",
 ]

@@ -40,6 +40,7 @@ class Whiteboard(Base):
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
     meeting_id = Column(Integer, nullable=True)  # For future meeting integration
+    organization_id = Column(String(36), nullable=True, index=True)
 
     # Whiteboard details
     name = Column(String(255), nullable=False)

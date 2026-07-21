@@ -21,7 +21,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import TSVECTOR
 
-from app.db.base import Base
+from app.db.session import Base
 
 
 # ============================================
@@ -73,6 +73,9 @@ class SearchIndex(Base):
         nullable=True,  # Can be null for system-generated content
         index=True
     )
+    organization_id: Mapped[Optional[str]] = mapped_column(
+        String(36), nullable=True, index=True
+    )
 
     # Project context (optional)
     project_id: Mapped[Optional[int]] = mapped_column(
@@ -93,7 +96,8 @@ class SearchIndex(Base):
     )
 
     # Additional metadata as JSON
-    metadata: Mapped[Optional[dict]] = mapped_column(
+    extra_data = mapped_column(
+        "metadata",
         JSON,
         nullable=True,
         default=dict
@@ -191,6 +195,9 @@ class SearchHistory(Base):
         nullable=False,
         index=True
     )
+    organization_id: Mapped[Optional[str]] = mapped_column(
+        String(36), nullable=True, index=True
+    )
 
     # Search query
     query: Mapped[str] = mapped_column(String(500), nullable=False, index=True)
@@ -271,6 +278,9 @@ class SavedSearch(Base):
         ForeignKey("workspaces.id", ondelete="CASCADE"),
         nullable=False,
         index=True
+    )
+    organization_id: Mapped[Optional[str]] = mapped_column(
+        String(36), nullable=True, index=True
     )
 
     # Search details

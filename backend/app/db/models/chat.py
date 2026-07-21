@@ -51,6 +51,7 @@ class Channel(Base):
     # Foreign Keys
     workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=False)
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    organization_id = Column(String(36), nullable=True, index=True)
 
     # Channel Info
     name = Column(String(100), nullable=False)

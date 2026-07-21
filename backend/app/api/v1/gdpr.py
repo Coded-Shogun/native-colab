@@ -241,8 +241,8 @@ async def cancel_data_deletion(
         # Cancel deletion
         compliance_log.completed = True
         compliance_log.completed_at = datetime.utcnow()
-        compliance_log.metadata["cancelled"] = True
-        compliance_log.metadata["cancelled_at"] = datetime.utcnow().isoformat()
+        compliance_log.extra_data["cancelled"] = True
+        compliance_log.extra_data["cancelled_at"] = datetime.utcnow().isoformat()
 
         # Reactivate user account
         current_user.is_active = True

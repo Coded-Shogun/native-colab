@@ -27,8 +27,9 @@ from app.schemas.signature import (
     SignerResponse,
 )
 from app.services import storage_service
+from app.core.organization_context import get_organization_context, OrganizationContext
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_organization_context)])
 
 
 # ============================================

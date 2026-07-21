@@ -61,6 +61,7 @@ class SignatureRequest(Base):
     workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=False)
     document_id = Column(Integer, ForeignKey("documents.id"), nullable=False)
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    organization_id = Column(String(36), nullable=True, index=True)
 
     # Request details
     title = Column(String(255), nullable=False)
@@ -81,7 +82,7 @@ class SignatureRequest(Base):
     send_reminders = Column(Boolean, default=True, nullable=False)
 
     # Metadata
-    metadata = Column(JSON, nullable=True)
+    extra_data = Column("metadata", JSON, nullable=True)
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -217,7 +218,7 @@ class SignatureAuditLog(Base):
     # Context
     ip_address = Column(String(45), nullable=True)
     user_agent = Column(String(500), nullable=True)
-    metadata = Column(JSON, nullable=True)
+    extra_data = Column("metadata", JSON, nullable=True)
 
     # Timestamp
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

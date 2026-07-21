@@ -12,6 +12,9 @@ env:
   POSTGRES_PASSWORD: test123
   DATABASE_URL: postgresql+asyncpg://nativecolab_test:test123@localhost:5432/nativecolab_test
   REDIS_URL: redis://localhost:6379/0
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET }}
+  SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
 
 jobs:
   # ============================================
@@ -49,7 +52,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -67,18 +70,21 @@ jobs:
           REDIS_URL: ${{ env.REDIS_URL }}
           SECRET_KEY: test-secret-key
           JWT_SECRET_KEY: test-jwt-secret-key
+          SUPABASE_URL: ${{ env.SUPABASE_URL }}
+          SUPABASE_JWT_SECRET: ${{ env.SUPABASE_JWT_SECRET }}
+          SUPABASE_ANON_KEY: ${{ env.SUPABASE_ANON_KEY }}
         run: |
           pytest --cov=app --cov-report=xml --cov-report=html --cov-report=term
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           files: ./backend/coverage.xml
           flags: backend
           name: backend-coverage
 
       - name: Upload coverage artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: backend-coverage
           path: backend/htmlcov/
@@ -90,7 +96,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -149,14 +155,14 @@ jobs:
         run: npm run test -- --coverage
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           files: ./frontend/coverage/cobertura-coverage.xml
           flags: frontend
           name: frontend-coverage
 
       - name: Upload coverage artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: frontend-coverage
           path: frontend/coverage/
@@ -183,7 +189,7 @@ jobs:
         run: npm run build
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: frontend-build
           path: frontend/dist/
@@ -213,7 +219,7 @@ jobs:
         id: meta-backend
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}/backend
+          images: ghcr.io/native-one/native-colab-backend
           tags: |
             type=ref,event=branch
             type=sha,prefix={{branch}}-
@@ -233,7 +239,7 @@ jobs:
         id: meta-frontend
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}/frontend
+          images: ghcr.io/native-one/native-colab-frontend
           tags: |
             type=ref,event=branch
             type=sha,prefix={{branch}}-

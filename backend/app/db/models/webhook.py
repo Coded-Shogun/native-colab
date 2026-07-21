@@ -20,7 +20,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base
+from app.db.session import Base
 
 
 # ============================================
@@ -152,6 +152,9 @@ class Webhook(Base):
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True
+    )
+    organization_id: Mapped[Optional[str]] = mapped_column(
+        String(36), nullable=True, index=True
     )
 
     # Webhook details
@@ -504,6 +507,9 @@ class IntegrationConnection(Base):
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True
+    )
+    organization_id: Mapped[Optional[str]] = mapped_column(
+        String(36), nullable=True, index=True
     )
 
     # Connection details
